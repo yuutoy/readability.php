@@ -195,7 +195,7 @@ class Readability
 
                     // No luck after removing flags, just return the longest text we found during the different loops
                     usort($this->attempts, function ($a, $b) {
-                        return $a['textLength'] < $b['textLength'];
+                        return $b['textLength'] - $a['textLength'];
                     });
 
                     // But first check if we actually have something
@@ -882,7 +882,7 @@ class Readability
                     $next = $sibling;
                 }
 
-                while ($p->lastChild && $p->lastChild->isWhitespace()) {
+                while ($p && $p->lastChild && $p->lastChild->isWhitespace()) {
                     $p->removeChild($p->lastChild);
                 }
 
@@ -1046,7 +1046,7 @@ class Readability
                 $parentOfTopCandidate = $topCandidate->parentNode;
 
                 // Check if we are actually dealing with a DOMNode and not a DOMDocument node or higher
-                while ($parentOfTopCandidate->nodeName !== 'body' && $parentOfTopCandidate->nodeType === XML_ELEMENT_NODE) {
+                while ($parentOfTopCandidate && $parentOfTopCandidate->nodeName !== 'body' && $parentOfTopCandidate->nodeType === XML_ELEMENT_NODE) {
                     $listsContainingThisAncestor = 0;
                     for ($ancestorIndex = 0; $ancestorIndex < count($alternativeCandidateAncestors) && $listsContainingThisAncestor < $MINIMUM_TOPCANDIDATES; $ancestorIndex++) {
                         $listsContainingThisAncestor += (int)in_array($parentOfTopCandidate, $alternativeCandidateAncestors[$ancestorIndex]);
@@ -1076,7 +1076,7 @@ class Readability
             $scoreThreshold = $lastScore / 3;
 
             /* @var DOMElement $parentOfTopCandidate */
-            while ($parentOfTopCandidate->nodeName !== 'body') {
+            while ($parentOfTopCandidate && $parentOfTopCandidate->nodeName !== 'body') {
                 $parentScore = $parentOfTopCandidate->contentScore;
                 if ($parentScore < $scoreThreshold) {
                     break;
@@ -1095,7 +1095,7 @@ class Readability
             // If the top candidate is the only child, use parent instead. This will help sibling
             // joining logic when adjacent content is actually located in parent's sibling node.
             $parentOfTopCandidate = $topCandidate->parentNode;
-            while ($parentOfTopCandidate->nodeName !== 'body' && count(NodeUtility::filterTextNodes($parentOfTopCandidate->childNodes)) === 1) {
+            while ($parentOfTopCandidate && $parentOfTopCandidate->nodeName !== 'body' && count(NodeUtility::filterTextNodes($parentOfTopCandidate->childNodes)) === 1) {
                 $topCandidate = $parentOfTopCandidate;
                 $parentOfTopCandidate = $topCandidate->parentNode;
             }
