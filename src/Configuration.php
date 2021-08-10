@@ -69,6 +69,11 @@ class Configuration
     protected $originalURL = 'http://fakehost';
 
     /**
+     * @var string
+     */
+    protected $parser = 'html5';
+
+    /**
      * Configuration constructor.
      *
      * @param array $params
@@ -322,6 +327,26 @@ class Configuration
     public function setOriginalURL($originalURL)
     {
         $this->originalURL = $originalURL;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getParser()
+    {
+        return $this->parser;
+    }
+
+    /**
+     * @param string $parser
+     *
+     * @return $this
+     */
+    public function setParser($parser)
+    {
+        $this->parser = $parser;
 
         return $this;
     }

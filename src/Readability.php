@@ -8,6 +8,7 @@ use andreskrey\Readability\Nodes\DOM\DOMNode;
 use andreskrey\Readability\Nodes\DOM\DOMText;
 use andreskrey\Readability\Nodes\NodeUtility;
 use Psr\Log\LoggerInterface;
+use \Masterminds\HTML5;
 
 /**
  * Class Readability.
@@ -69,6 +70,14 @@ class Readability
      * @var string|null
      */
     protected $direction = null;
+
+    /**
+     * Base URI
+     * HTML5PHP doesn't appear to store it in the baseURI property like PHP's DOMDocument does when parsing with libxml
+     *
+     * @var string|null
+     */
+    protected $baseURI = null;
 
     /**
      * Configuration object.
@@ -254,17 +263,34 @@ class Readability
         // To avoid throwing a gazillion of errors on malformed HTMLs
         libxml_use_internal_errors(true);
 
-        $dom = new DOMDocument('1.0', 'utf-8');
+        //$html = preg_replace('/(<br[^>]*>[ \n\r\t]*){2,}/i', '</p><p>', $html);
+
+        if ($this->configuration->getParser() === 'html5') {
+            $this->logger->debug('[Loading] Using HTML5 parser...');
+            $html5 = new HTML5(['disable_html_ns' => true, 'target_document' => new DOMDocument('1.0', 'utf-8')]);
+            $dom = $html5->loadHTML($html);
+            //TODO: Improve this so it looks inside <html><head><base>, not just any <base>
+            $base = $dom->getElementsByTagName('base');
+            if ($base->length > 0) {
+                $base = $base->item(0);
+                $base = $base->getAttribute('href');
+                if ($base != '') {
+                    $this->baseURI = $base;
+                }
+            }
+        } else {
+            $this->logger->debug('[Loading] Using libxml parser...');
+            $dom = new DOMDocument('1.0', 'utf-8');
+            if ($this->configuration->getNormalizeEntities()) {
+                $this->logger->debug('[Loading] Normalized entities via mb_convert_encoding.');
+                // Replace UTF-8 characters with the HTML Entity equivalent. Useful to fix html with mixed content
+                $html = mb_convert_encoding($html, 'HTML-ENTITIES', 'UTF-8');
+            }
+        }
 
         if (!$this->configuration->getSubstituteEntities()) {
             // Keep the original HTML entities
             $dom->substituteEntities = false;
-        }
-
-        if ($this->configuration->getNormalizeEntities()) {
-            $this->logger->debug('[Loading] Normalized entities via mb_convert_encoding.');
-            // Replace UTF-8 characters with the HTML Entity equivalent. Useful to fix html with mixed content
-            $html = mb_convert_encoding($html, 'HTML-ENTITIES', 'UTF-8');
         }
 
         if ($this->configuration->getSummonCthulhu()) {
@@ -273,7 +299,10 @@ class Readability
         }
 
         // Prepend the XML tag to avoid having issues with special characters. Should be harmless.
-        $dom->loadHTML('<?xml encoding="UTF-8">' . $html);
+        if ($this->configuration->getParser() !== 'html5') {
+            $dom->loadHTML('<?xml encoding="UTF-8">' . $html);
+            $this->baseURI = $dom->baseURI;
+        }
         $dom->encoding = 'UTF-8';
 
         $this->removeScripts($dom);
@@ -611,13 +640,13 @@ class Readability
     public function getPathInfo($url)
     {
         // Check for base URLs
-        if ($this->dom->baseURI !== null) {
-            if (substr($this->dom->baseURI, 0, 1) === '/') {
+        if ($this->baseURI !== null) {
+            if (substr($this->baseURI, 0, 1) === '/') {
                 // URLs starting with '/' override completely the URL defined in the link
-                $pathBase = parse_url($url, PHP_URL_SCHEME) . '://' . parse_url($url, PHP_URL_HOST) . $this->dom->baseURI;
+                $pathBase = parse_url($url, PHP_URL_SCHEME) . '://' . parse_url($url, PHP_URL_HOST) . $this->baseURI;
             } else {
                 // Otherwise just prepend the base to the actual path
-                $pathBase = parse_url($url, PHP_URL_SCHEME) . '://' . parse_url($url, PHP_URL_HOST) . dirname(parse_url($url, PHP_URL_PATH)) . '/' . rtrim($this->dom->baseURI, '/') . '/';
+                $pathBase = parse_url($url, PHP_URL_SCHEME) . '://' . parse_url($url, PHP_URL_HOST) . dirname(parse_url($url, PHP_URL_PATH)) . '/' . rtrim($this->baseURI, '/') . '/';
             }
         } else {
             $pathBase = parse_url($url, PHP_URL_SCHEME) . '://' . parse_url($url, PHP_URL_HOST) . dirname(parse_url($url, PHP_URL_PATH)) . '/';
@@ -774,8 +803,9 @@ class Readability
         }
 
         $rel = $node->getAttribute('rel');
+        $itemprop = $node->getAttribute("itemprop");
 
-        if ($rel === 'author' || preg_match(NodeUtility::$regexps['byline'], $matchString) && $this->isValidByline($node->getTextContent())) {
+        if ($rel === 'author' || ($itemprop && strpos($itemprop, 'author') !== false) || preg_match(NodeUtility::$regexps['byline'], $matchString) && $this->isValidByline($node->getTextContent())) {
             $this->logger->info(sprintf('[Metadata] Found article author: \'%s\'', $node->getTextContent()));
             $this->setAuthor(trim($node->getTextContent()));
 
@@ -884,6 +914,10 @@ class Readability
 
                 while ($p && $p->lastChild && $p->lastChild->isWhitespace()) {
                     $p->removeChild($p->lastChild);
+                }
+
+                while ($p && $p->firstChild && $p->firstChild->isWhitespace()) {
+                    $p->removeChild($p->firstChild);
                 }
 
                 if ($p->parentNode->tagName === 'p') {
@@ -1270,7 +1304,7 @@ class Readability
         $this->_cleanExtraParagraphs($article);
 
         foreach (iterator_to_array($article->getElementsByTagName('br')) as $br) {
-            $next = $br->nextSibling;
+            $next = NodeUtility::nextElement($br->nextSibling);
             if ($next && $next->nodeName === 'p') {
                 $this->logger->debug('[PrepArticle] Removing br node next to a p node.');
                 $br->parentNode->removeChild($br);
@@ -1525,6 +1559,17 @@ class Readability
         }
     }
 
+    public function _getAllNodesWithTag($node, array $tagNames) {
+        $nodes = [];
+        foreach ($tagNames as $tag) {
+            $nodeList = $node->getElementsByTagName($tag);
+            foreach ($nodeList as $n) {
+                $nodes[] = $n;
+            }
+        }
+        return $nodes;
+    }
+
     /**
      * Clean a node of all elements of type "tag".
      * (Unless it's a youtube/vimeo video. People love movies.).
@@ -1556,8 +1601,8 @@ class Readability
                     continue;
                 }
 
-                // Then check the elements inside this element for the same.
-                if (preg_match(NodeUtility::$regexps['videos'], $item->C14N())) {
+                // For embed with <object> tag, check inner HTML as well.
+                if ($item->tagName === 'object' && preg_match(NodeUtility::$regexps['videos'], $item->C14N())) {
                     continue;
                 }
             }
@@ -1703,7 +1748,12 @@ class Readability
      */
     public function getContent()
     {
-        return ($this->content instanceof DOMDocument) ? $this->content->C14N() : null;
+        if ($this->content instanceof DOMDocument) {
+            $html5 = new HTML5(['disable_html_ns' => true]);
+            return $html5->saveHTML($this->content);
+        } else {
+            return null;
+        }
     }
 
     /**
