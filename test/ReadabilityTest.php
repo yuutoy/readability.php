@@ -33,7 +33,21 @@ class ReadabilityTest extends \PHPUnit\Framework\TestCase
         $readability = new Readability($configuration);
         $readability->parse($testPage->getSourceHTML());
 
-        $this->assertSame($testPage->getExpectedHTML(), $readability->getContent(), 'Parsed text does not match the expected one.');
+        // Let's (crudely) remove whitespace between tags here to simplify comparison.
+        // This isn't used for output.
+        $from = ['/\>[^\S ]+/s', '/[^\S ]+\</s', '/(\s)+/s', '/> </s'];
+        $to   = ['>',            '<',            '\\1',      '><'];
+        $expected_no_whitespace = preg_replace($from, $to, $testPage->getExpectedHTML());
+        $readability_no_whitespace = preg_replace($from, $to, $readability->getContent());
+
+        $this->assertSame(
+            preg_replace($from, $to, $expected_no_whitespace),
+            preg_replace($from, $to, $readability_no_whitespace),
+            'Parsed text does not match the expected one.'
+        );
+
+        //$this->assertSame($testPage->getExpectedHTML(), $readability->getContent(), 'Parsed text does not match the expected one.');
+        //$this->assertXmlStringEqualsXmlString($testPage->getExpectedHTML(), $readability->getContent(), 'Parsed text does not match the expected one.');
     }
 
     /**
@@ -101,13 +115,14 @@ class ReadabilityTest extends \PHPUnit\Framework\TestCase
         foreach (array_slice($testPages, 2) as $testPage) {
             $testCasePath = $path . DIRECTORY_SEPARATOR . $testPage . DIRECTORY_SEPARATOR;
 
+            $slug = $testPage;
             $source = file_get_contents($testCasePath . 'source.html');
             $expectedHTML = file_get_contents($testCasePath . 'expected.html');
             $expectedImages = json_decode(file_get_contents($testCasePath . 'expected-images.json'), true);
             $expectedMetadata = json_decode(file_get_contents($testCasePath . 'expected-metadata.json'));
             $configuration = file_exists($testCasePath . 'config.json') ? json_decode(file_get_contents($testCasePath . 'config.json'), true) : [];
 
-            yield $testPage => [new TestPage($configuration, $source, $expectedHTML, $expectedImages, $expectedMetadata)];
+            yield $testPage => [new TestPage($slug, $configuration, $source, $expectedHTML, $expectedImages, $expectedMetadata)];
         }
     }
 
