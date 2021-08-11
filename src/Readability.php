@@ -1750,7 +1750,9 @@ class Readability
     {
         if ($this->content instanceof DOMDocument) {
             $html5 = new HTML5(['disable_html_ns' => true]);
-            return $html5->saveHTML($this->content);
+            // by using childNodes below we make sure HTML5PHP's serialiser
+            // doesn't output the <!DOCTYPE html> string at the start.
+            return $html5->saveHTML($this->content->childNodes);
         } else {
             return null;
         }
