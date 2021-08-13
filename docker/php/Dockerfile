@@ -20,7 +20,8 @@ RUN curl https://gitlab.gnome.org/GNOME/libxml2/-/archive/v$LIBXML_VERSION/libxm
 RUN docker-php-source extract && \
 	cd /usr/src/php && \
 	./configure \
-		--with-libxml=/usr/lib/x86_64-linux-gnu \
+		--libdir=/usr/lib/x86_64-linux-gnu \
+		--with-libxml \
 		--enable-mbstring \
 		--with-openssl \
 		--with-config-file-path=/usr/local/etc/php \
