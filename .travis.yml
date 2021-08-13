@@ -1,6 +1,10 @@
 language: bash
 services: docker
 
+os: linux
+arch:
+  - arm64
+
 env:
   matrix:
     - PHP_VERSION=8 LIBXML_VERSION=2.9.12
