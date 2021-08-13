@@ -38,7 +38,7 @@ class TestPage
     }
 
     /**
-     * @return null
+     * @return string
      */
     public function getSourceHTML()
     {
@@ -46,7 +46,7 @@ class TestPage
     }
 
     /**
-     * @return null
+     * @return string
      */
     public function getExpectedHTML()
     {

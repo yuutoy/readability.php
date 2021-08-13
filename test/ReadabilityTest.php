@@ -40,11 +40,7 @@ class ReadabilityTest extends \PHPUnit\Framework\TestCase
         $expected_no_whitespace = preg_replace($from, $to, $testPage->getExpectedHTML());
         $readability_no_whitespace = preg_replace($from, $to, $readability->getContent());
 
-        $this->assertSame(
-            preg_replace($from, $to, $expected_no_whitespace),
-            preg_replace($from, $to, $readability_no_whitespace),
-            'Parsed text does not match the expected one.'
-        );
+        $this->assertSame($expected_no_whitespace, $readability_no_whitespace, 'Parsed text does not match the expected one.');
 
         //$this->assertSame($testPage->getExpectedHTML(), $readability->getContent(), 'Parsed text does not match the expected one.');
         //$this->assertXmlStringEqualsXmlString($testPage->getExpectedHTML(), $readability->getContent(), 'Parsed text does not match the expected one.');
