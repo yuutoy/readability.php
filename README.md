@@ -1,5 +1,16 @@
 # Readability.php
-[![Latest Stable Version](https://poser.pugx.org/andreskrey/readability.php/v/stable)](https://packagist.org/packages/andreskrey/readability.php) [![Tests](https://github.com/fivefilters/readability.php/actions/workflows/main.yml/badge.svg?branch=master)](https://github.com/fivefilters/readability.php/actions/workflows/main.yml) [![Coverage Status](https://coveralls.io/repos/github/andreskrey/readability.php/badge.svg?branch=master)](https://coveralls.io/github/andreskrey/readability.php/?branch=master) [![StyleCI](https://styleci.io/repos/71042668/shield?branch=master)](https://styleci.io/repos/71042668) [![Total Downloads](https://poser.pugx.org/andreskrey/readability.php/downloads)](https://packagist.org/packages/andreskrey/readability.php) [![Monthly Downloads](https://poser.pugx.org/andreskrey/readability.php/d/monthly)](https://packagist.org/packages/andreskrey/readability.php)
+
+## News (August 2021)
+
+Andres Rey, the [original developer](https://github.com/andreskrey/readability.php) of Readability.php has kindly let us take over maintenance and development of the project.
+
+Please bear with us while we catch up with [Readability.js](https://github.com/mozilla/readability) changes. There'll be a new release (2.2.0) when we're ready.
+
+For the changes we've made so far in this repository, please see our [blog post](https://www.fivefilters.org/2021/readability/).
+
+## About
+
+[![Latest Stable Version](https://poser.pugx.org/andreskrey/readability.php/v/stable)](https://packagist.org/packages/andreskrey/readability.php) [![Tests](https://github.com/fivefilters/readability.php/actions/workflows/main.yml/badge.svg?branch=master)](https://github.com/fivefilters/readability.php/actions/workflows/main.yml) [![Coverage Status](https://coveralls.io/repos/github/andreskrey/readability.php/badge.svg?branch=master)](https://coveralls.io/github/andreskrey/readability.php/?branch=master) [![StyleCI](https://styleci.io/repos/71042668/shield?branch=master)](https://styleci.io/repos/71042668) [![Total Downloads](https://poser.pugx.org/fivefilters/readability.php/downloads)](https://packagist.org/packages/fivefilters/readability.php) [![Monthly Downloads](https://poser.pugx.org/fivefilters/readability.php/d/monthly)](https://packagist.org/packages/fivefilters/readability.php)
 
 PHP port of *Mozilla's* **[Readability.js](https://github.com/mozilla/readability)**. Parses html text (usually news and other articles) and returns **title**, **author**, **main image** and **text content** without nav bars, ads, footers, or anything that isn't the main body of the text. Analyzes each node, gives them a score, and determines what's relevant and what can be discarded.
 
@@ -7,7 +18,9 @@ PHP port of *Mozilla's* **[Readability.js](https://github.com/mozilla/readabilit
 
 The project aim is to be a 1 to 1 port of Mozilla's version and to follow closely all changes introduced there, but there are some major differences on the structure. Most of the code is a 1:1 copy –even the comments were imported– but some functions and structures were adapted to suit better the PHP language.
 
-**Lead Developer**: Andres Rey
+**Original Developer**: Andres Rey
+
+**Developer/Maintainer**: FiveFilters.org
 
 ## Requirements
 
@@ -19,14 +32,14 @@ PHP 7.0+, ext-dom, ext-xml, and ext-mbstring. To install all this dependencies (
 
 First you have to require the library using composer:
 
-`composer require andreskrey/readability.php`
+`composer require fivefilters/readability.php`
 
 Then, create a Readability class and pass a Configuration class, feed the `parse()` function with your HTML and echo the variable:
 
 ```php 
-use andreskrey\Readability\Readability;
-use andreskrey\Readability\Configuration;
-use andreskrey\Readability\ParseException;
+use fivefilters\Readability\Readability;
+use fivefilters\Readability\Configuration;
+use fivefilters\Readability\ParseException;
 
 $readability = new Readability(new Configuration());
 
@@ -95,7 +108,7 @@ Then you pass this Configuration object to Readability. The following options ar
 - **SubstituteEntities**: default value `false`, disables the `substituteEntities` flag of libxml. Will avoid substituting HTML entities. Like `&aacute;` to á.
 - **NormalizeEntities**: default value `false`, converts UTF-8 characters to its HTML Entity equivalent. Useful to parse HTML with mixed encoding.
 - **OriginalURL**: default value `http://fakehost`, original URL from the article used to fix relative URLs.
-- **SummonCthulhu**: default value `false`, remove all `<script>` nodes via regex. This is not ideal as it might break things, but might be the only solution to [libxml problems with unescaped javascript](https://github.com/andreskrey/readability.php#known-issues). If you're not parsing Javascript tutorials, it's recommended to always set this option as `true`.
+- **SummonCthulhu**: default value `false`, remove all `<script>` nodes via regex. This is not ideal as it might break things, but might be the only solution to [libxml problems with unescaped javascript](https://github.com/fivefilters/readability.php#known-issues). If you're not parsing Javascript tutorials, it's recommended to always set this option as `true`.
 
 ### Debug log
 
