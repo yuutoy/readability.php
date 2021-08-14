@@ -1,6 +1,6 @@
 <?php
 
-namespace andreskrey\Readability\Test;
+namespace fivefilters\Readability\Test;
 
 class TestPage
 {

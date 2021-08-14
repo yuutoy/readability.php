@@ -1,10 +1,10 @@
 <?php
 
-namespace andreskrey\Readability\Test;
+namespace fivefilters\Readability\Test;
 
-use andreskrey\Readability\Configuration;
-use andreskrey\Readability\ParseException;
-use andreskrey\Readability\Readability;
+use fivefilters\Readability\Configuration;
+use fivefilters\Readability\ParseException;
+use fivefilters\Readability\Readability;
 
 /**
  * Class ReadabilityTest.

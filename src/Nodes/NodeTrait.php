@@ -1,11 +1,11 @@
 <?php
 
-namespace andreskrey\Readability\Nodes;
+namespace fivefilters\Readability\Nodes;
 
-use andreskrey\Readability\Nodes\DOM\DOMDocument;
-use andreskrey\Readability\Nodes\DOM\DOMElement;
-use andreskrey\Readability\Nodes\DOM\DOMNode;
-use andreskrey\Readability\Nodes\DOM\DOMText;
+use fivefilters\Readability\Nodes\DOM\DOMDocument;
+use fivefilters\Readability\Nodes\DOM\DOMElement;
+use fivefilters\Readability\Nodes\DOM\DOMNode;
+use fivefilters\Readability\Nodes\DOM\DOMText;
 use DOMNodeList;
 
 /**
