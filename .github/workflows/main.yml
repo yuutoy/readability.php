@@ -39,4 +39,11 @@ jobs:
         run: |
           composer install
           docker build --build-arg PHP_VERSION=${{matrix.php}} --build-arg LIBXML_VERSION=${{matrix.libxml}} -t gh-action - < ./docker/php/Dockerfile
-          docker run --volume $PWD:/app --workdir="/app" gh-action php ./vendor/bin/phpunit
+          docker run --volume $PWD:/app --workdir="/app" --env XDEBUG_MODE=coverage gh-action php ./vendor/bin/phpunit --coverage-clover /app/test/clover.xml
+          
+      - name: Upload coverage results to Coveralls
+        env:
+          COVERALLS_REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          composer require php-coveralls/php-coveralls
+          docker run --volume $PWD:/app --workdir="/app" --env COVERALLS_REPO_TOKEN=${{ secrets.GITHUB_TOKEN }} gh-action php ./vendor/php-coveralls/php-coveralls/bin/php-coveralls --coverage_clover=/app/test/clover.xml -v
