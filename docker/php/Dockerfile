@@ -1,39 +1,16 @@
-ARG PHP_VERSION=8
-FROM php:${PHP_VERSION}-cli
+# Load pre-built image of PHP (php-cli) and libxml. 
+# See https://hub.docker.com/r/fivefilters/php-libxml for supported versions
+# Use build.Dockerfile to compile new versions of PHP/libxml
 
-# Install sqlite and libonig-dev (required for building PHP 7.4)
-RUN apt-get update && apt-get install -y libsqlite3-dev libonig-dev
-# Install custom version of libxml2
-RUN apt-get install -y automake libtool unzip libssl-dev
-# Remove current version
-RUN apt-get remove -y libxml2
-# Download new version, configure and compile
-ARG LIBXML_VERSION=2.9.12
-RUN curl https://gitlab.gnome.org/GNOME/libxml2/-/archive/v$LIBXML_VERSION/libxml2-v$LIBXML_VERSION.zip -o /tmp/libxml.zip && \
-	cd /tmp && \
-	unzip libxml.zip && \
-	cd libxml2-v$LIBXML_VERSION && \
-	./autogen.sh --libdir=/usr/lib/x86_64-linux-gnu && \
-	make && \
-	make install
-# Recompile PHP with the new libxml2 library
-RUN docker-php-source extract && \
-	cd /usr/src/php && \
-	./configure \
-		--libdir=/usr/lib/x86_64-linux-gnu \
-		--with-libxml \
-		--enable-mbstring \
-		--with-openssl \
-		--with-config-file-path=/usr/local/etc/php \
-		--with-config-file-scan-dir=/usr/local/etc/php/conf.d && \
-	make && make install && \
-	docker-php-source delete
+# For reference, default package versions for Ubuntu are:
+# Ubuntu 18.04 - php 7.2, libxml 2.9.4
+# Ubuntu 20.04 - php 7.4, libxml 2.9.10
+# Ubuntu 20.10 - php 7.4, libxml 2.9.10
+# Ubuntu 21.04 - php 7.4, libxml 2.9.10
+# Ubuntu 21.10 - php 8.0, libxml 2.9.10
 
-#RUN apt-get update
+ARG PHP_VERSION
+ARG LIBXML_VERSION
+FROM fivefilters/php-libxml:php-${PHP_VERSION}-libxml-${LIBXML_VERSION}
 
-# Check if there's a pinned version of Xdebug for compatibility reasons
-#ARG XDEBUG_VERSION
-#RUN pecl install xdebug$(if [ ! ${XDEBUG_VERSION} = '' ]; then echo -${XDEBUG_VERSION} ; fi) && docker-php-ext-enable xdebug
-
-# Required by coveralls
-#RUN apt-get install git -y
+RUN apt-get update
