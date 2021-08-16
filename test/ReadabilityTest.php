@@ -95,7 +95,7 @@ class ReadabilityTest extends \PHPUnit\Framework\TestCase
         $readability = new Readability($configuration);
         $readability->parse($testPage->getSourceHTML());
 
-        $this->assertSame($testPage->getExpectedImages(), $readability->getImages());
+        $this->assertSame($testPage->getExpectedImages(), array_values($readability->getImages()));
     }
 
     /**
