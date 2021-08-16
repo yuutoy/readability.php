@@ -194,7 +194,9 @@ If you really want to test against every supported version of PHP and every supp
 
 ## Code porting
 
-Up to date with readability.js as of [19 Nov 2018](https://github.com/mozilla/readability/commit/876c81f710711ba2afb36dd83889d4c5b4fc2743).
+2.1.0 - Up to date with readability.js as of [19 Nov 2018](https://github.com/mozilla/readability/commit/876c81f710711ba2afb36dd83889d4c5b4fc2743).
+
+Master branch - Up to date as of [5 Mar 2019](https://github.com/mozilla/readability/commit/f5c46a7b14ded61b69df239b11af4873bd0a3af2).
  
 ## License
 
