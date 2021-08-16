@@ -1262,9 +1262,12 @@ class Readability
 
         // Clean out elements have "share" in their id/class combinations from final top candidates,
         // which means we don't remove the top candidates even they have "share".
+        
+        $shareElementThreshold = $this->configuration->getCharThreshold();
+        
         foreach ($article->childNodes as $child) {
-            $this->_cleanMatchedNodes($child, function ($node, $matchString) {
-                return (preg_match('/share/i', $matchString) && mb_strlen($node->textContent) < 500);
+            $this->_cleanMatchedNodes($child, function ($node, $matchString) use ($shareElementThreshold) {
+                return (preg_match('/share/i', $matchString) && mb_strlen($node->textContent) < $shareElementThreshold);
             });
         }
 
