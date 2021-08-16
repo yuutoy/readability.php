@@ -569,7 +569,7 @@ class Readability
             }
         }
 
-        $curTitle = trim($curTitle);
+        $curTitle = preg_replace(NodeUtility::$regexps['normalize'], ' ', trim($curTitle));
 
         /*
          * If we now have 4 words or fewer as our title, and either no
