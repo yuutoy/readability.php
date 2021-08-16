@@ -1263,7 +1263,9 @@ class Readability
         // Clean out elements have "share" in their id/class combinations from final top candidates,
         // which means we don't remove the top candidates even they have "share".
         foreach ($article->childNodes as $child) {
-            $this->_cleanMatchedNodes($child, '/share/i');
+            $this->_cleanMatchedNodes($child, function ($node, $matchString) {
+                return (preg_match('/share/i', $matchString) && mb_strlen($node->textContent) < 500);
+            });
         }
 
         /*
@@ -1424,20 +1426,20 @@ class Readability
     }
 
     /**
-     * Clean out elements whose id/class combinations match specific string.
+     * Clean out elements that match the specified conditions
      *
      * @param $node DOMElement Node to clean
-     * @param $regex string Match id/class combination.
+     * @param $filter callable Function determines whether a node should be removed
      *
      * @return void
      **/
-    public function _cleanMatchedNodes($node, $regex)
+    public function _cleanMatchedNodes($node, callable $filter)
     {
         $endOfSearchMarkerNode = NodeUtility::getNextNode($node, true);
         $next = NodeUtility::getNextNode($node);
         while ($next && $next !== $endOfSearchMarkerNode) {
-            if (preg_match($regex, sprintf('%s %s', $next->getAttribute('class'), $next->getAttribute('id')))) {
-                $this->logger->debug(sprintf('Removing matched node with regex: \'%s\', node class was: \'%s\', id: \'%s\'', $regex, $next->getAttribute('class'), $next->getAttribute('id')));
+            if ($filter($next, sprintf('%s %s', $next->getAttribute('class'), $next->getAttribute('id')))) {
+                $this->logger->debug(sprintf('Removing matched node, node class was: \'%s\', id: \'%s\'', $next->getAttribute('class'), $next->getAttribute('id')));
                 $next = NodeUtility::removeAndGetNext($next);
             } else {
                 $next = NodeUtility::getNextNode($next);
