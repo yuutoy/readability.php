@@ -1498,7 +1498,12 @@ class Readability
             /** @var $node DOMElement */
             $node = $DOMNodeList->item($length - 1 - $i);
 
-            // First check if we're in a data table, in which case don't remove us.
+            // First check if this node IS data table, in which case don't remove it.
+            if ($tag === 'table' && $node->isReadabilityDataTable()) {
+                continue;
+            }
+
+            // Next check if we're inside a data table, in which case don't remove it as well.
             if ($node->hasAncestorTag('table', -1, function ($node) {
                 return $node->isReadabilityDataTable();
             })) {
