@@ -1540,12 +1540,21 @@ class Readability
                 $input = $node->getElementsByTagName('input')->length;
 
                 $embedCount = 0;
-                $embeds = $node->getElementsByTagName('embed');
+                $embeds = $this->_getAllNodesWithTag($node, ['object', 'embed', 'iframe']);
 
                 foreach ($embeds as $embedNode) {
-                    if (preg_match(NodeUtility::$regexps['videos'], $embedNode->C14N())) {
-                        $embedCount++;
+                    for ($j = 0; $j < $embedNode->attributes->length; $j++) {
+                        if (preg_match(NodeUtility::$regexps['videos'], $embedNode->attributes->item($j)->nodeValue)) {
+                            continue 3;
+                        }
                     }
+
+                    // For embed with <object> tag, check inner HTML as well.
+                    if ($embedNode->tagName === "object" && preg_match(NodeUtility::$regexps['videos'], $embedNode->C14N())) {
+                        continue 2;
+                    }
+
+                    $embedCount++;
                 }
 
                 $linkDensity = $node->getLinkDensity();
