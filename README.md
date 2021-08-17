@@ -14,7 +14,7 @@ For the changes we've made so far in this repository, please see our [blog post]
 
 PHP port of *Mozilla's* **[Readability.js](https://github.com/mozilla/readability)**. Parses html text (usually news and other articles) and returns **title**, **author**, **main image** and **text content** without nav bars, ads, footers, or anything that isn't the main body of the text. Analyzes each node, gives them a score, and determines what's relevant and what can be discarded.
 
-![Screenshot](https://raw.githubusercontent.com/andreskrey/readability.php/assets/screenshot.png)
+![Screenshot](https://raw.githubusercontent.com/fivefilters/readability.php/assets/screenshot.png)
 
 The project aim is to be a 1 to 1 port of Mozilla's version and to follow closely all changes introduced there, but there are some major differences on the structure. Most of the code is a 1:1 copy –even the comments were imported– but some functions and structures were adapted to suit better the PHP language.
 
@@ -196,7 +196,7 @@ If you really want to test against every supported version of PHP and every supp
 
 2.1.0 - Up to date with readability.js as of [19 Nov 2018](https://github.com/mozilla/readability/commit/876c81f710711ba2afb36dd83889d4c5b4fc2743).
 
-Master branch - Up to date as of [5 Mar 2019](https://github.com/mozilla/readability/commit/f5c46a7b14ded61b69df239b11af4873bd0a3af2).
+Master branch - Up to date as of [7 Mar 2019](https://github.com/mozilla/readability/commit/9009f64f9ce8b7d593c1ef90864843f72e193cba).
  
 ## License
 
