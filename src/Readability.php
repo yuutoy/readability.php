@@ -707,6 +707,7 @@ class Readability
                 if (
                     preg_match(NodeUtility::$regexps['unlikelyCandidates'], $matchString) &&
                     !preg_match(NodeUtility::$regexps['okMaybeItsACandidate'], $matchString) &&
+                    !$node->hasAncestorTag( 'table') &&
                     $node->nodeName !== 'body' &&
                     $node->nodeName !== 'a'
                 ) {
