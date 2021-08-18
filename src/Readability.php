@@ -1814,7 +1814,9 @@ class Readability
             }
         }
 
-        $this->_cleanClasses($article);
+        if (!$this->configuration->getKeepClasses()) {
+            $this->_cleanClasses($article);
+        }
 
         return $article;
     }

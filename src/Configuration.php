@@ -74,6 +74,11 @@ class Configuration
     protected $parser = 'html5';
 
     /**
+     * @var bool
+     */
+    protected $keepClasses = false;
+
+    /**
      * Configuration constructor.
      *
      * @param array $params
@@ -347,6 +352,26 @@ class Configuration
     public function setParser($parser)
     {
         $this->parser = $parser;
+
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function getKeepClasses()
+    {
+        return $this->keepClasses;
+    }
+
+    /**
+     * @param bool $keepClasses
+     *
+     * @return $this
+     */
+    public function setKeepClasses($keepClasses)
+    {
+        $this->keepClasses = $keepClasses;
 
         return $this;
     }
