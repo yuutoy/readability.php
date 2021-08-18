@@ -192,6 +192,13 @@ This will start all the containers and run all the tests on every supported vers
 
 If you really want to test against every supported version of PHP and every supported version of libxml, run `test-all-versions`. This will test against PHP versions 7 to 7.3 and libxml versions 2.9.4 to 2.9.9. Normally you won't need to do this unless you think you've found a bug on an specific version of libxml.
 
+## Security
+
+If you're going to use Readability with untrusted input (whether in HTML or DOM form), we **strongly** recommend you use a sanitizer library like [HTML Purifier](https://github.com/ezyang/htmlpurifier) to avoid script injection when you use
+the output of Readability. We would also recommend using [CSP](https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP) to add further defense-in-depth
+restrictions to what you allow the resulting content to do. The Firefox integration of
+reader mode uses both of these techniques itself. Sanitizing unsafe content out of the input is explicitly not something we aim to do as part of Readability itself - there are other good sanitizer libraries out there, use them!
+
 ## Code porting
 
 2.1.0 - Up to date with readability.js as of [19 Nov 2018](https://github.com/mozilla/readability/commit/876c81f710711ba2afb36dd83889d4c5b4fc2743).
