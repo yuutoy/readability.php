@@ -1251,6 +1251,8 @@ class Readability
         // visually linked to other content-ful elements (text, images, etc.).
         $this->_markDataTables($article);
 
+        $this->_fixLazyImages($article);
+
         // Clean out junk from the article content
         $this->_cleanConditionally($article, 'form');
         $this->_cleanConditionally($article, 'fieldset');
@@ -1393,6 +1395,84 @@ class Readability
             }
             // Now just go by size entirely:
             $table->setReadabilityDataTable($sizeInfo['rows'] * $sizeInfo['columns'] > 10);
+        }
+    }
+
+    /**
+     * convert images and figures that have properties like data-src into images that can be loaded without JS
+     *
+     * @param DOMDocument $article
+     *
+     * @return void
+     */
+    public function _fixLazyImages(DOMDocument $article)
+    {
+        $images = $this->_getAllNodesWithTag($article, ['img', 'picture', 'figure']);
+        foreach ($images as $elem) {
+            // In some sites (e.g. Kotaku), they put 1px square image as base64 data uri in the src attribute.
+            // So, here we check if the data uri is too short, just might as well remove it.
+            if ($elem->getAttribute('src') && preg_match(NodeUtility::$regexps['b64DataUrl'], $elem->getAttribute('src'), $parts)) {
+                // Make sure it's not SVG, because SVG can have a meaningful image in under 133 bytes.
+                if ($parts[1] === 'image/svg+xml') {
+                    continue;
+                }
+
+                // Make sure this element has other attributes which contains image.
+                // If it doesn't, then this src is important and shouldn't be removed.
+                $srcCouldBeRemoved = false;
+                for ($i = 0; $i < $elem->attributes->length; $i++) {
+                    $attr = $elem->attributes->item($i);
+                    if ($attr->name === 'src') {
+                        continue;
+                    }
+
+                    if (preg_match('/\.(jpg|jpeg|png|webp)/i', $attr->value)) {
+                        $srcCouldBeRemoved = true;
+                        break;
+                    }
+                }
+
+                // Here we assume if image is less than 100 bytes (or 133B after encoded to base64)
+                // it will be too small, therefore it might be placeholder image.
+                if ($srcCouldBeRemoved) {
+                    $b64starts = stripos($elem->getAttribute('src'), 'base64') + 7;
+                    $b64length = strlen($elem->getAttribute('src')) - $b64starts;
+                    if ($b64length < 133) {
+                        $elem->removeAttribute('src');
+                    }
+                }
+            }
+
+            // Don't remove if there's a src or srcset attribute, and there's no sign of 'lazy' loading in the class
+            // attribute value.
+            if (($elem->getAttribute('src') || $elem->getAttribute('srcset')) && mb_stripos($elem->getAttribute('class'), 'lazy') === false) {
+                continue;
+            }
+
+            for ($j = 0; $j < $elem->attributes->length; $j++) {
+                $attr = $elem->attributes->item($j);
+                if ($attr->name === 'src' || $attr->name === 'srcset' || $attr->name === 'alt') {
+                    continue;
+                }
+                $copyTo = null;
+                if (preg_match('/\.(jpg|jpeg|png|webp)\s+\d/', $attr->value)) {
+                    $copyTo = 'srcset';
+                } elseif (preg_match('/^\s*\S+\.(jpg|jpeg|png|webp)\S*\s*$/', $attr->value)) {
+                    $copyTo = 'src';
+                }
+                if ($copyTo) {
+                    //if this is an img or picture, set the attribute directly
+                    if ($elem->tagName === 'img' || $elem->tagName === 'picture') {
+                        $elem->setAttribute($copyTo, $attr->value);
+                    } elseif ($elem->tagName === 'figure' && empty($this->_getAllNodesWithTag($elem, ['img', 'picture']))) {
+                        //if the item is a <figure> that does not contain an image or picture, create one and place it inside the figure
+                        //see the nytimes-3 testcase for an example
+                        $img = $article->createElement('img');
+                        $img->setAttribute($copyTo, $attr->value);
+                        $elem->appendChild($img);
+                    }
+                }
+            }
         }
     }
 
