@@ -1270,7 +1270,7 @@ class Readability
         
         foreach ($article->childNodes as $child) {
             $this->_cleanMatchedNodes($child, function ($node, $matchString) use ($shareElementThreshold) {
-                return (preg_match('/share/i', $matchString) && mb_strlen($node->textContent) < $shareElementThreshold);
+                return (preg_match(NodeUtility::$regexps['shareElements'], $matchString) && mb_strlen($node->textContent) < $shareElementThreshold);
             });
         }
 
