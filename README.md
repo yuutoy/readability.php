@@ -4,7 +4,7 @@
 
 Andres Rey, the [original developer](https://github.com/andreskrey/readability.php) of Readability.php has kindly let us take over maintenance and development of the project.
 
-Please bear with us while we catch up with [Readability.js](https://github.com/mozilla/readability) changes. There'll be a new release (2.2.0) when we're ready.
+Please bear with us while we catch up with [Readability.js](https://github.com/mozilla/readability) changes. There'll be a new release (3.0.0) when we're ready.
 
 For the changes we've made so far in this repository, please see our [blog post](https://www.fivefilters.org/2021/readability/).
 
@@ -24,9 +24,9 @@ The project aim is to be a 1 to 1 port of Mozilla's version and to follow closel
 
 ## Requirements
 
-PHP 7.0+, ext-dom, ext-xml, and ext-mbstring. To install all this dependencies (in the rare case your system does not have them already), you could try something like this in *nix like environments:
+PHP 7.3+, ext-dom, ext-xml, and ext-mbstring. To install these dependencies (in the rare case your system does not have them already), you could try something like this in *nix like environments:
 
-`$ sudo apt-get install php7.1-xml php7.1-mbstring`
+`$ sudo apt-get install php7.4-xml php7.4-mbstring`
 
 ## How to use it
 
@@ -108,7 +108,9 @@ Then you pass this Configuration object to Readability. The following options ar
 - **SubstituteEntities**: default value `false`, disables the `substituteEntities` flag of libxml. Will avoid substituting HTML entities. Like `&aacute;` to á.
 - **NormalizeEntities**: default value `false`, converts UTF-8 characters to its HTML Entity equivalent. Useful to parse HTML with mixed encoding.
 - **OriginalURL**: default value `http://fakehost`, original URL from the article used to fix relative URLs.
-- **SummonCthulhu**: default value `false`, remove all `<script>` nodes via regex. This is not ideal as it might break things, but might be the only solution to [libxml problems with unescaped javascript](https://github.com/fivefilters/readability.php#known-issues). If you're not parsing Javascript tutorials, it's recommended to always set this option as `true`.
+- **KeepClasses**: default value `false`, which removes all `class="..."` attribute values from HTML elements.
+- **Parser**: default value `html5`, which uses HTML5-PHP for parsing. Set to 'libxml' to use that instead (not recommended for modern HTML documents).
+- **SummonCthulhu**: default value `false`, remove all `<script>` nodes via regex. This is not ideal as it might break things, but if you've set the parser to libxml (see above), it might be the only solution to [libxml problems with unescaped javascript](https://github.com/fivefilters/readability.php#known-issues).
 
 ### Debug log
 
@@ -129,7 +131,9 @@ In the log you will find information about the parsed nodes, why they were remov
 
 Of course the main limitation is PHP. Websites that load the content through lazy loading, AJAX, or any type of javascript fueled call will be ignored (actually, *not ran*) and the resulting text will be incorrect, compared to the readability.js results. All the articles you want to parse with readability.php need to be complete and all the content should be in the HTML already.  
 
-## Known Issues
+## Known Issues when using libxml parsing
+
+Readability.php as of version 3.0.0 uses a HTML5 parser. Earlier versions used libxml. The issues below apply to libxml parsing, so if you're using an earlier version of Readability.php (pre 3.0.0), or if you've set the parser to libxml in the configuration, read on...
 
 ### Javascript spilling into the text body
 
@@ -166,7 +170,11 @@ Self closing tags like `<br />` get automatically expanded to `<br></br`. No way
 
 ## Dependencies
 
-Readability.php uses the [PSR Log](https://github.com/php-fig/log) interface to define the allowed type of loggers. [Monolog](https://github.com/Seldaek/monolog) is only required on development installations. (`--dev` option during `composer install`).
+Readability.php uses 
+
+ * [HTML5-PHP](https://github.com/Masterminds/html5-php) to parse and serialise HTML.
+ * [PSR Log](https://github.com/php-fig/log) interface to define the allowed type of loggers. 
+ * [Monolog](https://github.com/Seldaek/monolog) is only required on development installations. (`--dev` option during `composer install`).
 
 ## To-do
 
@@ -201,9 +209,9 @@ reader mode uses both of these techniques itself. Sanitizing unsafe content out 
 
 ## Code porting
 
-2.1.0 - Up to date with readability.js as of [19 Nov 2018](https://github.com/mozilla/readability/commit/876c81f710711ba2afb36dd83889d4c5b4fc2743).
+Version 2.1.0 - Up to date with Readability.js up to [19 Nov 2018](https://github.com/mozilla/readability/commit/876c81f710711ba2afb36dd83889d4c5b4fc2743).
 
-Master branch - Up to date as of [7 Mar 2019](https://github.com/mozilla/readability/commit/9009f64f9ce8b7d593c1ef90864843f72e193cba).
+Master branch - Up to [31 Mar 2020](https://github.com/mozilla/readability/commit/b2f3a43f9f8b1eb41717731cc23a925efc693ab3).
  
 ## License
 
