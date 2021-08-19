@@ -928,11 +928,11 @@ class Readability
         }
 
         // Replace font tags with span
-        $fonts = $dom->getElementsByTagName('font');
-        $length = $fonts->length;
+        $fonts = $this->_getAllNodesWithTag($dom, ['font']);
+        $length = count($fonts);
         for ($i = 0; $i < $length; $i++) {
             $this->logger->debug('[PrepDocument] Converting font tag into a span tag.');
-            $font = $fonts->item($length - 1 - $i);
+            $font = $fonts[$length - 1 - $i];
             NodeUtility::setNodeTag($font, 'span');
         }
     }
@@ -1538,11 +1538,11 @@ class Readability
      */
     public function _cleanExtraParagraphs(DOMDocument $article)
     {
-        $paragraphs = $article->getElementsByTagName('p');
-        $length = $paragraphs->length;
+        $paragraphs = $this->_getAllNodesWithTag($article, ['p']);
+        $length = count($paragraphs);
 
         for ($i = 0; $i < $length; $i++) {
-            $paragraph = $paragraphs->item($length - 1 - $i);
+            $paragraph = $paragraphs[$length - 1 - $i];
 
             $imgCount = $paragraph->getElementsByTagName('img')->length;
             $embedCount = $paragraph->getElementsByTagName('embed')->length;
@@ -1578,11 +1578,11 @@ class Readability
          * without effecting the traversal.
          */
 
-        $DOMNodeList = $article->getElementsByTagName($tag);
-        $length = $DOMNodeList->length;
+        $allNodesWithTag = $this->_getAllNodesWithTag($article, [$tag]);
+        $length = count($allNodesWithTag);
         for ($i = 0; $i < $length; $i++) {
             /** @var $node DOMElement */
-            $node = $DOMNodeList->item($length - 1 - $i);
+            $node = $allNodesWithTag[$length - 1 - $i];
 
             // First check if this node IS data table, in which case don't remove it.
             if ($tag === 'table' && $node->isReadabilityDataTable()) {
@@ -1683,10 +1683,10 @@ class Readability
     {
         $isEmbed = in_array($tag, ['object', 'embed', 'iframe']);
 
-        $DOMNodeList = $article->getElementsByTagName($tag);
-        $length = $DOMNodeList->length;
+        $allNodesWithTag = $this->_getAllNodesWithTag($article, [$tag]);
+        $length = count($allNodesWithTag);
         for ($i = 0; $i < $length; $i++) {
-            $item = $DOMNodeList->item($length - 1 - $i);
+            $item = $allNodesWithTag[$length - 1 - $i];
 
             // Allow youtube and vimeo videos through as people usually want to see those.
             if ($isEmbed) {
@@ -1721,20 +1721,18 @@ class Readability
      **/
     public function _cleanHeaders(DOMDocument $article)
     {
-        for ($headerIndex = 1; $headerIndex < 3; $headerIndex++) {
-            $headers = $article->getElementsByTagName('h' . $headerIndex);
-            /** @var $header DOMElement */
-            foreach ($headers as $header) {
-                $weight = 0;
-                if ($this->configuration->getWeightClasses()) {
-                    $weight = $header->getClassWeight();
-                }
+        $headers = $this->_getAllNodesWithTag($article, ['h1', 'h2']);
+        /** @var $header DOMElement */
+        foreach ($headers as $header) {
+            $weight = 0;
+            if ($this->configuration->getWeightClasses()) {
+                $weight = $header->getClassWeight();
+            }
 
-                if ($weight < 0) {
-                    $this->logger->debug(sprintf('[PrepArticle] Removing H node with 0 or less weight. Content was: \'%s\'', substr($header->nodeValue, 0, 128)));
+            if ($weight < 0) {
+                $this->logger->debug(sprintf('[PrepArticle] Removing H node with 0 or less weight. Content was: \'%s\'', substr($header->nodeValue, 0, 128)));
 
-                    NodeUtility::removeNode($header);
-                }
+                NodeUtility::removeNode($header);
             }
         }
     }
@@ -1780,7 +1778,7 @@ class Readability
                     // they won't work after scripts have been removed from the page.
                     if (strpos($href, 'javascript:') === 0) {
                         $this->logger->debug(sprintf('[PostProcess] Removing \'javascript:\' link. Content is: \'%s\'', substr($link->textContent, 0, 128)));
-                        
+
                         // if the link only contains simple text content, it can be converted to a text node
                         if ($link->childNodes->length === 1 && $link->childNodes->item(0)->nodeType === XML_TEXT_NODE) {
                             $text = $article->createTextNode($link->textContent);
