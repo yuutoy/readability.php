@@ -1776,13 +1776,23 @@ class Readability
                 /** @var DOMElement $link */
                 $href = $link->getAttribute('href');
                 if ($href) {
-                    // Replace links with javascript: URIs with text content, since
+                    // Remove links with javascript: URIs, since
                     // they won't work after scripts have been removed from the page.
                     if (strpos($href, 'javascript:') === 0) {
                         $this->logger->debug(sprintf('[PostProcess] Removing \'javascript:\' link. Content is: \'%s\'', substr($link->textContent, 0, 128)));
-
-                        $text = $article->createTextNode($link->textContent);
-                        $link->parentNode->replaceChild($text, $link);
+                        
+                        // if the link only contains simple text content, it can be converted to a text node
+                        if ($link->childNodes->length === 1 && $link->childNodes->item(0)->nodeType === XML_TEXT_NODE) {
+                            $text = $article->createTextNode($link->textContent);
+                            $link->parentNode->replaceChild($text, $link);
+                        } else {
+                            // if the link has multiple children, they should all be preserved
+                            $container = $article->createElement('span');
+                            while ($link->firstChild) {
+                                $container->appendChild($link->firstChild);
+                            }
+                            $link->parentNode->replaceChild($container, $link);
+                        }
                     } else {
                         $this->logger->debug(sprintf('[PostProcess] Converting link to absolute URI: \'%s\'', substr($href, 0, 128)));
 
