@@ -305,6 +305,9 @@ class Readability
         }
         $dom->encoding = 'UTF-8';
 
+        // Unwrap image from noscript
+        $this->unwrapNoscriptImages($dom);
+
         $this->removeScripts($dom);
 
         $this->prepDocument($dom);
@@ -832,6 +835,105 @@ class Readability
         }
 
         return false;
+    }
+
+
+    /**
+     * Check if node is image, or if node contains exactly only one image
+     * whether as a direct child or as its descendants.
+     *
+     * @param DOMElement $node
+     */
+    private function isSingleImage(DOMElement $node) {
+        if ($node->tagName === 'img') {
+            return true;
+        }
+
+        if ($node->children()->length !== 1 || trim($node->textContent) !== '') {
+            return false;
+        }
+
+        return $this->isSingleImage($node->children()->item(0));
+    }
+
+   /**
+    * Find all <noscript> that are located after <img> nodes, and which contain only one
+    * <img> element. Replace the first image with the image from inside the <noscript> tag,
+    * and remove the <noscript> tag. This improves the quality of the images we use on
+    * some sites (e.g. Medium).
+    *
+    * @param DOMDocument $dom
+    */
+    private function unwrapNoscriptImages(DOMDocument $dom) {
+        // Find img without source or attributes that might contains image, and remove it.
+        // This is done to prevent a placeholder img is replaced by img from noscript in next step.
+        $imgs = iterator_to_array($dom->getElementsByTagName('img'));
+        array_walk($imgs, function($img) {
+            for ($i = 0; $i < $img->attributes->length; $i++) {
+                $attr = $img->attributes->item($i);
+                switch ($attr->name) {
+                    case 'src':
+                    case 'srcset':
+                    case 'data-src':
+                    case 'data-srcset':
+                        return;
+                }
+
+                if (preg_match('/\.(jpg|jpeg|png|webp)/i', $attr->value)) {
+                    return;
+                }
+            }
+
+            $img->parentNode->removeChild($img);
+        });
+
+        // Next find noscript and try to extract its image
+        $noscripts = iterator_to_array($dom->getElementsByTagName('noscript'));
+        array_walk($noscripts, function($noscript) use($dom) {
+            // Parse content of noscript and make sure it only contains image
+            // var tmp = doc.createElement("div");
+            // tmp.innerHTML = noscript.innerHTML;
+            $tmp = $noscript->cloneNode(true);
+            $dom->importNode($tmp);
+            //NodeUtility::setNodeTag($tmp, 'div');
+            if (!$this->isSingleImage($tmp)) {
+                return;
+            }
+
+            // If noscript has previous sibling and it only contains image,
+            // replace it with noscript content. However we also keep old
+            // attributes that might contains image.
+            $prevElement = $noscript->previousElementSibling();
+            if ($prevElement && $this->isSingleImage($prevElement)) {
+                $prevImg = $prevElement;
+                if ($prevImg->tagName !== 'img') {
+                    $prevImg = $prevElement->getElementsByTagName('img')->item(0);
+                }
+
+                $newImg = $tmp->getElementsByTagName('img')->item(0);
+                for ($i = 0; $i < $prevImg->attributes->length; $i++) {
+                    $attr = $prevImg->attributes->item($i);
+                    if ($attr->value === '') {
+                        continue;
+                    }
+
+                    if ($attr->name === 'src' || $attr->name === 'srcset' || preg_match('/\.(jpg|jpeg|png|webp)/i', $attr->value)) {
+                        if ($newImg->getAttribute($attr->name) === $attr->value) {
+                            continue;
+                        }
+
+                        $attrName = $attr->name;
+                        if ($newImg->hasAttribute($attrName)) {
+                            $attrName = 'data-old-' . $attrName;
+                        }
+
+                        $newImg->setAttribute($attrName, $attr->value);
+                    }
+                }
+
+                $noscript->parentNode->replaceChild($tmp->getFirstElementChild(), $prevElement);
+            }
+        });
     }
 
     /**
