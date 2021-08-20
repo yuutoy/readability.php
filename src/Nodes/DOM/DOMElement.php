@@ -35,11 +35,12 @@ class DOMElement extends \DOMElement
     public function previousElementSibling()
     {
         $previous = $this->previousSibling;
-        do {
+        while ($previous) {
             if ($previous->nodeType === XML_ELEMENT_NODE) {
                 return $previous;
             }
-        } while ($previous = $previous->previousSibling);
+            $previous = $previous->previousSibling;
+        }
         return null;
     }
 }
