@@ -720,6 +720,12 @@ class Readability
                 }
             }
 
+            if ($node->getAttribute('role') === 'complementary') {
+                $this->logger->debug(sprintf('Removing complementary content - %s', $matchString));
+                $node = NodeUtility::removeAndGetNext($node);
+                continue;
+              }
+
             // Remove DIV, SECTION, and HEADER nodes without any content(e.g. text, image, video, or iframe).
             if (($node->nodeName === 'div' || $node->nodeName === 'section' || $node->nodeName === 'header' ||
                     $node->nodeName === 'h1' || $node->nodeName === 'h2' || $node->nodeName === 'h3' ||
@@ -891,11 +897,11 @@ class Readability
         $noscripts = iterator_to_array($dom->getElementsByTagName('noscript'));
         array_walk($noscripts, function($noscript) use($dom) {
             // Parse content of noscript and make sure it only contains image
+            // [PHP port] Could copy innerHTML support over for the commented lines below, but is it needed?
             // var tmp = doc.createElement("div");
             // tmp.innerHTML = noscript.innerHTML;
             $tmp = $noscript->cloneNode(true);
             $dom->importNode($tmp);
-            //NodeUtility::setNodeTag($tmp, 'div');
             if (!$this->isSingleImage($tmp)) {
                 return;
             }
