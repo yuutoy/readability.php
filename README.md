@@ -188,7 +188,7 @@ Readability parses all the text with DOMDocument, scans the text nodes and gives
 
 ## Testing
 
-Any version of PHP installed locally should be enough to develop new features and add new test cases. If you want to be 100% sure that your change doesn't create any issues with other versions of PHP, you can use the provided Docker containers to test currently in 7.0, 7.1, 7.2, and 7.3.
+Any version of PHP installed locally should be enough to develop new features and add new test cases. If you want to be 100% sure that your change doesn't create any issues with other versions of PHP, you can use the provided Docker containers to test currently in 7.3, 7.4, and 8.0.
 
 You'll need Docker and Docker Compose for this. To run all the tests in all the available versions just type the following command:
 
@@ -196,9 +196,9 @@ You'll need Docker and Docker Compose for this. To run all the tests in all the 
 make test-all
 ```
 
-This will start all the containers and run all the tests on every supported version of PHP. If you want to test against a specific version, you can use `make test-7.0`, `make test-7.1`, `make test-7.2`, or `make test-7.3`.
+This will start all the containers and run all the tests on every supported version of PHP. If you want to test against a specific version, you can use `make test-7.3`, `make test-7.4`, or `make test-8`.
 
-If you really want to test against every supported version of PHP and every supported version of libxml, run `test-all-versions`. This will test against PHP versions 7 to 7.3 and libxml versions 2.9.4 to 2.9.9. Normally you won't need to do this unless you think you've found a bug on an specific version of libxml.
+If you really want to test against every supported version of PHP and every supported version of libxml, run `test-all-versions`. This will test against PHP versions 7.3 to 8 and libxml versions 2.9.4, 2.9.5, 2.9.10, and 2.9.12. Normally you won't need to do this unless you think you've found a bug on an specific version of libxml.
 
 ## Security
 
@@ -211,7 +211,7 @@ reader mode uses both of these techniques itself. Sanitizing unsafe content out 
 
 Version 2.1.0 - Up to date with Readability.js up to [19 Nov 2018](https://github.com/mozilla/readability/commit/876c81f710711ba2afb36dd83889d4c5b4fc2743).
 
-Master branch - Up to [31 Mar 2020](https://github.com/mozilla/readability/commit/b2f3a43f9f8b1eb41717731cc23a925efc693ab3).
+Master branch - Up to [13 Apr 2020](https://github.com/mozilla/readability/commit/52ab9b5c8916c306a47b2119270dcdabebf9d203).
  
 ## License
 
