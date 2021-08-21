@@ -126,6 +126,17 @@ class Readability
     ];
 
     /**
+     * @var array
+     */
+    private $htmlEscapeMap = [
+        'lt' => '<',
+        'gt' => '>',
+        'amp' => '&',
+        'quot' => '"',
+        'apos' => '\'',
+    ];
+
+    /**
      * Readability constructor.
      *
      * @param Configuration $configuration
@@ -423,6 +434,13 @@ class Readability
         ], array_keys($values)));
 
         $this->setSiteName(isset($values[$key]) ? $values[$key] : null);
+
+        // in many sites the meta value is escaped with HTML entities,
+        // so here we need to unescape it
+        $this->setTitle($this->unescapeHtmlEntities($this->getTitle()));
+        $this->setAuthor($this->unescapeHtmlEntities($this->getAuthor()));
+        $this->setExcerpt($this->unescapeHtmlEntities($this->getExcerpt()));
+        $this->setSiteName($this->unescapeHtmlEntities($this->getSiteName()));
     }
 
     /**
@@ -843,6 +861,33 @@ class Readability
         return false;
     }
 
+    /**
+     * Converts some of the common HTML entities in string to their corresponding characters.
+     *
+     * @param string $str - a string to unescape.
+     * @return string without HTML entity.
+     */
+    private function unescapeHtmlEntities($str) {
+        if (!$str) {
+            return $str;
+        }
+
+        $htmlEscapeMap = $this->htmlEscapeMap;
+        $str = preg_replace_callback('/&(quot|amp|apos|lt|gt);/', function($tag) use($htmlEscapeMap) {
+            return $htmlEscapeMap[$tag[1]];
+        }, $str);
+        $str = preg_replace_callback('/&#(?:x([0-9a-z]{1,4})|([0-9]{1,4}));/i', function($matches) {
+            $hex = $matches[1];
+            $numStr = $matches[2];
+            if ($hex !== '') {
+                $num = intval($hex, 16);
+            } else {
+                $num = intval($numStr, 10);
+            }
+            return mb_chr($num);
+        }, $str);
+        return $str;
+    }
 
     /**
      * Check if node is image, or if node contains exactly only one image
@@ -1907,27 +1952,37 @@ class Readability
                 }
             }
 
-            foreach ($article->getElementsByTagName('img') as $img) {
-                /** @var DOMElement $img */
-                /*
-                 * Extract all possible sources of img url and select the first one on the list.
-                 */
-                $url = [
-                    $img->getAttribute('src'),
-                    $img->getAttribute('data-src'),
-                    $img->getAttribute('data-original'),
-                    $img->getAttribute('data-orig'),
-                    $img->getAttribute('data-url')
-                ];
-
-                $src = array_filter($url);
-                $src = reset($src);
+            $medias = $this->_getAllNodesWithTag($article, [
+                'img', 'picture', 'figure', 'video', 'audio', 'source'
+            ]);
+        
+            array_walk($medias, function($media) {
+                $src = $media->getAttribute('src');
+                $poster = $media->getAttribute('poster');
+                $srcset = $media->getAttribute('srcset');
+        
                 if ($src) {
                     $this->logger->debug(sprintf('[PostProcess] Converting image URL to absolute URI: \'%s\'', substr($src, 0, 128)));
 
-                    $img->setAttribute('src', $this->toAbsoluteURI($src));
+                    $media->setAttribute('src', $this->toAbsoluteURI($src));
                 }
-            }
+        
+                if ($poster) {
+                    $this->logger->debug(sprintf('[PostProcess] Converting image URL to absolute URI: \'%s\'', substr($poster, 0, 128)));
+
+                    $media->setAttribute('poster', $this->toAbsoluteURI($poster));
+                }
+        
+                if ($srcset) {
+                    $newSrcset = preg_replace_callback(NodeUtility::$regexps['srcsetUrl'], function($matches) {
+                        $this->logger->debug(sprintf('[PostProcess] Converting image URL to absolute URI: \'%s\'', substr($matches[1], 0, 128)));
+
+                        return $this->toAbsoluteURI($matches[1]) . $matches[2] . $matches[3];
+                    }, $srcset);
+            
+                    $media->setAttribute('srcset', $newSrcset);
+                }
+            });
         }
 
         if (!$this->configuration->getKeepClasses()) {
