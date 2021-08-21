@@ -109,8 +109,8 @@ Then you pass this Configuration object to Readability. The following options ar
 - **NormalizeEntities**: default value `false`, converts UTF-8 characters to its HTML Entity equivalent. Useful to parse HTML with mixed encoding.
 - **OriginalURL**: default value `http://fakehost`, original URL from the article used to fix relative URLs.
 - **KeepClasses**: default value `false`, which removes all `class="..."` attribute values from HTML elements.
-- **Parser**: default value `html5`, which uses HTML5-PHP for parsing. Set to 'libxml' to use that instead (not recommended for modern HTML documents).
-- **SummonCthulhu**: default value `false`, remove all `<script>` nodes via regex. This is not ideal as it might break things, but if you've set the parser to libxml (see above), it might be the only solution to [libxml problems with unescaped javascript](https://github.com/fivefilters/readability.php#known-issues).
+- **Parser**: default value `html5`, which uses HTML5-PHP for parsing. Set to `libxml` to use that instead (not recommended for modern HTML documents).
+- **SummonCthulhu**: default value `false`, remove all `<script>` nodes via regex. This is not ideal as it might break things, but if you've set the parser to libxml (see above), it might be the only solution to [libxml problems with unescaped javascript](https://github.com/fivefilters/readability.php#known-libxml-parsing-issues).
 
 ### Debug log
 
@@ -131,7 +131,7 @@ In the log you will find information about the parsed nodes, why they were remov
 
 Of course the main limitation is PHP. Websites that load the content through lazy loading, AJAX, or any type of javascript fueled call will be ignored (actually, *not ran*) and the resulting text will be incorrect, compared to the readability.js results. All the articles you want to parse with readability.php need to be complete and all the content should be in the HTML already.  
 
-## Known Issues when using libxml parsing
+## Known libxml parsing issues
 
 Readability.php as of version 3.0.0 uses a HTML5 parser. Earlier versions used libxml. The issues below apply to libxml parsing, so if you're using an earlier version of Readability.php (pre 3.0.0), or if you've set the parser to libxml in the configuration, read on...
 
