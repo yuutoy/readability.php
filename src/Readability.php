@@ -94,6 +94,13 @@ class Readability
     private $logger;
 
     /**
+     * JSON-LD
+     *
+     * @var array
+     */
+    private $jsonld = [];
+
+    /**
      * Collection of attempted text extractions.
      *
      * @var array
@@ -319,6 +326,9 @@ class Readability
         // Unwrap image from noscript
         $this->unwrapNoscriptImages($dom);
 
+        // Extract JSON-LD metadata before removing scripts
+        $this->jsonld = $this->configuration->getDisableJSONLD() ? [] : $this->getJSONLD($dom);
+
         $this->removeScripts($dom);
 
         $this->prepDocument($dom);
@@ -326,6 +336,98 @@ class Readability
         $this->logger->debug('[Loading] Loaded HTML successfully.');
 
         return $dom;
+    }
+
+    /**
+     * Try to extract metadata from JSON-LD object.
+     * For now, only Schema.org objects of type Article or its subtypes are supported.
+     *
+     * @param DOMDocument $dom
+     * @return Object with any metadata that could be extracted (possibly none)
+     */
+    private function getJSONLD(DOMDocument $dom)
+    {
+        $scripts = $this->_getAllNodesWithTag($dom, ['script']);
+
+        $jsonLdElement = $this->findNode($scripts, function($el) {
+            return $el->getAttribute('type') === 'application/ld+json';
+        });
+
+        if ($jsonLdElement) {
+            try {
+                // Strip CDATA markers if present
+                $content = preg_replace('/^\s*<!\[CDATA\[|\]\]>\s*$/', '', $jsonLdElement->textContent);
+                $parsed = json_decode($content, true);
+                $metadata = [];
+                if (
+                    !isset($parsed['@context']) ||
+                    !preg_match('/^https?\:\/\/schema\.org$/', $parsed['@context'])
+                ) {
+                    return $metadata;
+                }
+
+                if (!isset($parsed['@type']) && isset($parsed['@graph']) && is_array($parsed['@graph'])) {
+                    $_found = null;
+                    foreach ($parsed['@graph'] as $it) {
+                        if (isset($it['@type']) && is_string($it['@type']) && preg_match(NodeUtility::$regexps['jsonLdArticleTypes'], $it['@type'])) {
+                            $_found = $it;
+                        }
+                    }
+                    $parsed = $_found;
+                }
+
+                if (
+                    !$parsed ||
+                    !isset($parsed['@type']) ||
+                    !is_string($parsed['@type']) ||
+                    !preg_match(NodeUtility::$regexps['jsonLdArticleTypes'], $parsed['@type'])
+                ) {
+                    return $metadata;
+                }
+                if (isset($parsed['name']) && is_string($parsed['name'])) {
+                    $metadata['title'] = trim($parsed['name']);
+                } elseif (isset($parsed['headline']) && is_string($parsed['headline'])) {
+                    $metadata['title'] = trim($parsed['headline']);
+                }
+                if (isset($parsed['author'])) {
+                    if (isset($parsed['author']['name']) && is_string($parsed['author']['name'])) {
+                        $metadata['byline'] = trim($parsed['author']['name']);
+                    } elseif (
+                        is_array($parsed['author']) && 
+                        isset($parsed['author'][0]) && 
+                        is_array($parsed['author'][0]) && 
+                        isset($parsed['author'][0]['name']) && 
+                        is_string($parsed['author'][0]['name'])
+                    ) {
+                        $metadata['byline'] = array_filter($parsed['author'], function($author) {
+                            return is_array($author) && isset($author['name']) && is_string($author['name']);
+                        });
+                        $metadata['byline'] = array_map(function($author) {
+                            return trim($author['name']);
+                        }, $metadata['byline']);
+                        $metadata['byline'] = implode(', ', $metadata['byline']);
+                    }
+                }
+                if (isset($parsed['description']) && is_string($parsed['description'])) {
+                    $metadata['excerpt'] = trim($parsed['description']);
+                }
+                if (
+                    isset($parsed['publisher']) &&
+                    is_array($parsed['publisher']) &&
+                    isset($parsed['publisher']['name']) &&
+                    is_string($parsed['publisher']['name'])
+                ) {
+                    $metadata['siteName'] = trim($parsed['publisher']['name']);
+                }
+                return $metadata;
+            } catch (\Exception $err) {
+                // The try-catch blocks are from the JS version. Not sure if there's anything
+                // here in the PHP version that would trigger an error or exception, so perhaps we can 
+                // remove the try-catch blocks here (or at least translate errors to exceptions for this bit)
+                $this->logger->debug('[JSON-LD] Error parsing: '.$err->getMessage());
+            }
+        }
+        return [];
     }
 
     /**
@@ -392,7 +494,11 @@ class Readability
             'twitter:title'
         ], array_keys($values)));
 
-        $this->setTitle(isset($values[$key]) ? trim($values[$key]) : null);
+        if (isset($this->jsonld['title'])) {
+            $this->setTitle($this->jsonld['title']);
+        } else {
+            $this->setTitle(isset($values[$key]) ? trim($values[$key]) : null);
+        }
 
         if (!$this->getTitle()) {
             $this->setTitle($this->getArticleTitle());
@@ -405,7 +511,11 @@ class Readability
             'author'
         ], array_keys($values)));
 
-        $this->setAuthor(isset($values[$key]) ? $values[$key] : null);
+        if (isset($this->jsonld['byline'])) {
+            $this->setAuthor($this->jsonld['byline']);
+        } else {
+            $this->setAuthor(isset($values[$key]) ? $values[$key] : null);
+        }
 
         // get description
         $key = current(array_intersect([
@@ -418,7 +528,11 @@ class Readability
             'twitter:description'
         ], array_keys($values)));
 
-        $this->setExcerpt(isset($values[$key]) ? $values[$key] : null);
+        if (isset($this->jsonld['excerpt'])) {
+            $this->setExcerpt($this->jsonld['excerpt']);
+        } else {
+            $this->setExcerpt(isset($values[$key]) ? $values[$key] : null);
+        }
 
         // get main image
         $key = current(array_intersect([
@@ -433,7 +547,11 @@ class Readability
             'og:site_name'
         ], array_keys($values)));
 
-        $this->setSiteName(isset($values[$key]) ? $values[$key] : null);
+        if (isset($this->jsonld['siteName'])) {
+            $this->setSiteName($this->jsonld['siteName']);
+        } else {
+            $this->setSiteName(isset($values[$key]) ? $values[$key] : null);
+        }
 
         // in many sites the meta value is escaped with HTML entities,
         // so here we need to unescape it
@@ -1990,6 +2108,24 @@ class Readability
         }
 
         return $article;
+    }
+
+    /**
+     * Iterate over a NodeList, and return the first node that passes
+     * the supplied test function
+     *
+     * @param  NodeList nodeList The NodeList.
+     * @param  Function fn       The test function.
+     * @return DOMNode|null
+     */
+    private function findNode(array $nodeList, callable $fn)
+    {
+        foreach ($nodeList as $node) {
+            if ($fn($node)) {
+                return $node;
+            }
+        }
+        return null;
     }
 
     /**

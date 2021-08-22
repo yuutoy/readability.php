@@ -79,6 +79,11 @@ class Configuration
     protected $keepClasses = false;
 
     /**
+     * @var bool
+     */
+    protected $disableJSONLD = false;
+
+    /**
      * Configuration constructor.
      *
      * @param array $params
@@ -372,6 +377,26 @@ class Configuration
     public function setKeepClasses($keepClasses)
     {
         $this->keepClasses = $keepClasses;
+
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function getDisableJSONLD()
+    {
+        return $this->disableJSONLD;
+    }
+
+    /**
+     * @param bool $disableJSONLD
+     *
+     * @return $this
+     */
+    public function setDisableJSONLD($disableJSONLD)
+    {
+        $this->disableJSONLD = $disableJSONLD;
 
         return $this;
     }
