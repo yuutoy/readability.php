@@ -1882,8 +1882,6 @@ class Readability
             return;
         }
 
-        $isList = in_array($tag, ['ul', 'ol']);
-
         /*
          * Gather counts for other typical elements embedded within.
          * Traverse backwards so we can remove nodes at the same time
@@ -1895,6 +1893,25 @@ class Readability
         for ($i = 0; $i < $length; $i++) {
             /** @var $node DOMElement */
             $node = $allNodesWithTag[$length - 1 - $i];
+
+            $isList = in_array($tag, ['ul', 'ol']);
+            /*
+            // Doesn't seem to work as expected
+            // compared to JS version: https://github.com/mozilla/readability/commit/3c833899866ffb1f9130767110197fd6f5c08d4c
+            if (!$isList) {
+                $listLength = 0;
+                $listNodes = $this->_getAllNodesWithTag($node, ['ul', 'ol']);
+                array_walk($listNodes, function($list) use(&$listLength) {
+                    $listLength += mb_strlen($list->getTextContent());
+                });
+                $nodeTextLength = mb_strlen($node->getTextContent());
+                if (!$nodeTextLength) {
+                    $isList = true;
+                } else {
+                    $isList = $listLength / $nodeTextLength > 0.9;
+                }
+            }
+            */
 
             // First check if this node IS data table, in which case don't remove it.
             if ($tag === 'table' && $node->isReadabilityDataTable()) {

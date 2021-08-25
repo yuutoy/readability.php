@@ -238,19 +238,21 @@ trait NodeTrait
      */
     public function getLinkDensity()
     {
-        $linkLength = 0;
         $textLength = mb_strlen($this->getTextContent(true));
-
-        if (!$textLength) {
+        if ($textLength === 0) {
             return 0;
         }
+
+        $linkLength = 0;
 
         $links = $this->getAllLinks();
 
         if ($links) {
             /** @var DOMElement $link */
             foreach ($links as $link) {
-                $linkLength += mb_strlen($link->getTextContent(true));
+                $href = $link->getAttribute('href');
+                $coefficient = ($href && preg_match(NodeUtility::$regexps['hashUrl'], $href)) ? 0.3 : 1;
+                $linkLength += mb_strlen($link->getTextContent(true)) * $coefficient;
             }
         }
 
