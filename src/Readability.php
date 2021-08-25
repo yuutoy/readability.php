@@ -639,7 +639,7 @@ class Readability
         $node = $article;
     
         while ($node) {
-            if ($node->parentNode && in_array($node->tagName, ['div', 'section']) && !($node->hasAttribute('id') && strpos($node->getAttribute('id'), 'readability') === 0)) {
+            if ($node->parentNode && in_array($node->nodeName, ['div', 'section']) && !($node->hasAttribute('id') && strpos($node->getAttribute('id'), 'readability') === 0)) {
                 if ($node->isElementWithoutContent()) {
                     $node = NodeUtility::removeAndGetNext($node);
                     continue;
