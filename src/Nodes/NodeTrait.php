@@ -282,7 +282,7 @@ trait NodeTrait
 
         // Look for a special ID
         $id = $this->getAttribute('id');
-        if (trim($id)) {
+        if (trim($id) !== '') {
             if (preg_match(NodeUtility::$regexps['negative'], $id)) {
                 $weight -= 25;
             }
@@ -302,11 +302,11 @@ trait NodeTrait
      *
      * @return string
      */
-    public function getTextContent($normalize = false)
+    public function getTextContent($normalize = true)
     {
-        $nodeValue = $this->nodeValue;
+        $nodeValue = trim($this->textContent);
         if ($normalize) {
-            $nodeValue = trim(preg_replace('/\s{2,}/', ' ', $nodeValue));
+            $nodeValue = preg_replace(NodeUtility::$regexps['normalize'], ' ', $nodeValue);
         }
 
         return $nodeValue;
@@ -374,7 +374,7 @@ trait NodeTrait
      */
     public function createNode($originalNode, $tagName)
     {
-        $text = $originalNode->getTextContent();
+        $text = $originalNode->getTextContent(false);
         $newNode = $originalNode->ownerDocument->createElement($tagName, $text);
 
         return $newNode;
@@ -400,7 +400,7 @@ trait NodeTrait
                 return false;
             }
 
-            if ($node->parentNode->nodeName === $tagName && (!$filterFn || $filterFn($node->parentNode))) {
+            if ($node->parentNode->tagName === $tagName && (!$filterFn || $filterFn($node->parentNode))) {
                 return true;
             }
 
@@ -433,7 +433,7 @@ trait NodeTrait
             }
 
             /* @var DOMNode $child */
-            return !($child->nodeType === XML_TEXT_NODE && !preg_match('/\S$/', $child->getTextContent()));
+            return !($child->nodeType === XML_TEXT_NODE && preg_match(NodeUtility::$regexps['hasContent'], $child->textContent));
         });
     }
 
