@@ -43,13 +43,17 @@ class NodeUtility
     ];
 
     /**
+     * Finds the next node, starting from the given node, and ignoring
+     * whitespace in between. If the given node is an element, the same node is
+     * returned.
+     * 
      * Imported from the Element class on league\html-to-markdown.
      *
      * @param $node
      *
-     * @return DOMElement
+     * @return DOMNode
      */
-    public static function nextElement($node)
+    public static function nextNode($node)
     {
         $next = $node;
         while ($next

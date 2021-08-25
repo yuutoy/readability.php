@@ -1188,7 +1188,7 @@ class Readability
              * or non-whitespace. This leaves behind the first <br> in the chain
              * (which will be replaced with a <p> later).
              */
-            while (($next = NodeUtility::nextElement($next)) && ($next->nodeName === 'br')) {
+            while (($next = NodeUtility::nextNode($next)) && ($next->nodeName === 'br')) {
                 $this->logger->debug('[PrepDocument] Removing chain of BR nodes...');
 
                 $replaced = true;
@@ -1211,7 +1211,7 @@ class Readability
                 while ($next) {
                     // If we've hit another <br><br>, we're done adding children to this <p>.
                     if ($next->nodeName === 'br') {
-                        $nextElem = NodeUtility::nextElement($next->nextSibling);
+                        $nextElem = NodeUtility::nextNode($next->nextSibling);
                         if ($nextElem && $nextElem->nodeName === 'br') {
                             break;
                         }
@@ -1628,7 +1628,7 @@ class Readability
         $this->_cleanExtraParagraphs($article);
 
         foreach (iterator_to_array($article->getElementsByTagName('br')) as $br) {
-            $next = NodeUtility::nextElement($br->nextSibling);
+            $next = NodeUtility::nextNode($br->nextSibling);
             if ($next && $next->nodeName === 'p') {
                 $this->logger->debug('[PrepArticle] Removing br node next to a p node.');
                 $br->parentNode->removeChild($br);
