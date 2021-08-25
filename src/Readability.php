@@ -188,6 +188,7 @@ class Readability
         $this->getMainImage();
 
         while (true) {
+            $this->logger->debug('Starting parse loop');
             $root = $root->firstChild;
 
             $elementsToScore = $this->getNodes($root);
@@ -853,6 +854,8 @@ class Readability
 
         $elementsToScore = [];
 
+        $shouldRemoveTitleHeader = true;
+
         /*
          * First, node prepping. Trash nodes that look cruddy (like ones with the
          * class name "comment", etc), and turn divs into P tags where they have been
@@ -881,6 +884,13 @@ class Readability
                 $node = NodeUtility::removeAndGetNext($node);
                 continue;
             }
+
+            if ($shouldRemoveTitleHeader && $this->headerDuplicatesTitle($node)) {
+                $this->logger->debug(sprintf('Removing header: %s', $node->getTextContent()));
+                $shouldRemoveTitleHeader = false;
+                $node = NodeUtility::removeAndGetNext($node);
+                continue;
+              }
 
             // Remove unlikely candidates
             if ($stripUnlikelyCandidates) {
@@ -2106,14 +2116,30 @@ class Readability
             if ($this->configuration->getWeightClasses()) {
                 $weight = $header->getClassWeight();
             }
-            $heading = $header->getTextContent(false);
+            $shouldRemove = $weight < 0;
 
-            if (($this->textSimilarity($this->title, $heading) > 0.75) || $weight < 0) {
+            if ($shouldRemove) {
                 $this->logger->debug(sprintf('[PrepArticle] Removing H node with 0 or less weight. Content was: \'%s\'', substr($header->nodeValue, 0, 128)));
 
                 NodeUtility::removeNode($header);
             }
         }
+    }
+
+    /**
+     * Check if this node is an H1 or H2 element whose content is mostly
+     * the same as the article title.
+     *
+     * @param DOMNode the node to check.
+     * @return boolean indicating whether this is a title-like header.
+     */
+    private function headerDuplicatesTitle($node) {
+        if ($node->nodeName !== 'h1' && $node->nodeName !== 'h2') {
+            return false;
+        }
+        $heading = $node->getTextContent(false);
+        $this->logger->debug(sprintf('Evaluating similarity of header: %s"', $heading));
+        return $this->textSimilarity($this->title, $heading) > 0.75;
     }
 
     /**
