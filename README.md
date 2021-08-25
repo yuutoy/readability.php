@@ -229,7 +229,7 @@ Next, create a folder in tests/ called /changed, then run the following command 
 
 The two environment variables (`output-changes=1` and `output-diff=1`) will result in new output for any failing test (along with a diff of changes) being written to the changed/ folder.
 
-If you're happy the changes are okay, remove `output-diff=1` and the diff files will no longer be written, making it easier to copy the new expected output over to corresponding locations in test-pages\.
+If you're happy the changes are okay, set `output-diff=0` and the diff files will no longer be written, making it easier to copy the new expected output files over to their corresponding locations in test-pages\.
  
 ## License
 
