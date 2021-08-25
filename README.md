@@ -186,20 +186,6 @@ Readability.php uses
 
 Readability parses all the text with DOMDocument, scans the text nodes and gives the a score, based on the amount of words, links and type of element. Then it selects the highest scoring element and creates a new DOMDocument with all its siblings. Each sibling is scored to discard useless elements, like nav bars, empty nodes, etc.
 
-## Testing
-
-Any version of PHP installed locally should be enough to develop new features and add new test cases. If you want to be 100% sure that your change doesn't create any issues with other versions of PHP, you can use the provided Docker containers to test currently in 7.3, 7.4, and 8.0.
-
-You'll need Docker and Docker Compose for this. To run all the tests in all the available versions just type the following command:
-
-```bash
-make test-all
-```
-
-This will start all the containers and run all the tests on every supported version of PHP. If you want to test against a specific version, you can use `make test-7.3`, `make test-7.4`, or `make test-8`.
-
-If you really want to test against every supported version of PHP and every supported version of libxml, run `test-all-versions`. This will test against PHP versions 7.3 to 8 and libxml versions 2.9.4, 2.9.5, 2.9.10, and 2.9.12. Normally you won't need to do this unless you think you've found a bug on an specific version of libxml.
-
 ## Security
 
 If you're going to use Readability with untrusted input (whether in HTML or DOM form), we **strongly** recommend you use a sanitizer library like [HTML Purifier](https://github.com/ezyang/htmlpurifier) to avoid script injection when you use
@@ -212,6 +198,38 @@ reader mode uses both of these techniques itself. Sanitizing unsafe content out 
 Version 2.1.0 - Up to date with Readability.js up to [19 Nov 2018](https://github.com/mozilla/readability/commit/876c81f710711ba2afb36dd83889d4c5b4fc2743).
 
 Master branch - Up to [13 Apr 2020](https://github.com/mozilla/readability/commit/52ab9b5c8916c306a47b2119270dcdabebf9d203).
+
+## Testing
+
+Any version of PHP from 7.3 and above installed locally should be enough to develop new features and add new test cases. If you want to be 100% sure that your change doesn't create any issues with other versions of PHP, you can use the provided Docker containers to test currently in 7.3, 7.4, and 8.0.
+
+You'll need Docker and Docker Compose for this. To run all the tests in the three PHP versions above, just type the following command:
+
+```bash
+make test-all
+```
+
+This will start all the containers and run all the tests on every supported version of PHP. If you want to test against a specific version, you can use `make test-7.3`, `make test-7.4`, or `make test-8`.
+
+### Different versions of libxml
+
+If you want to test against supported versions of PHP *AND* multiple versions of libxml, run `test-all-versions`. This will test against PHP versions 7.3 to 8 and libxml versions 2.9.4, 2.9.5, 2.9.10, and 2.9.12. Normally you won't need to do this unless you think you've found a bug on an specific version of libxml.
+
+### Updating the expected tests
+
+If you've made an improvement to the code, you'll probably want to examine the Readability.php output for the test cases here. To do that, run the following command first from the root of the project folder:
+
+    docker-compose up -d php-7.4-libxml-2.9.10
+
+You should now have a docker image running with the project root folder mapped to /app/ on your Docker instance (see `docker-compose.yml`). Any changes to these files will be accessible from the Docker instance from now on.
+
+Next, create a folder in tests/ called /changed, then run the following command to run the test suite:
+
+    docker-compose exec -e output-changes=1 -e output-diff=1 php-7.4-libxml-2.9.10 php /app/vendor/phpunit/phpunit/phpunit --configuration /app/phpunit.xml
+
+The two environment variables (`output-changes=1` and `output-diff=1`) will result in new output for any failing test (along with a diff of changes) being written to the changed/ folder.
+
+If you're happy the changes are okay, remove `output-diff=1` and the diff files will no longer be written, making it easier to copy the new expected output over to corresponding locations in test-pages\.
  
 ## License
 
