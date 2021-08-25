@@ -38,7 +38,6 @@ trait NodeTrait
      * @var array
      */
     private $divToPElements = [
-        'a',
         'blockquote',
         'dl',
         'div',
@@ -47,8 +46,7 @@ trait NodeTrait
         'p',
         'pre',
         'table',
-        'ul',
-        'select',
+        'ul'
     ];
 
     /**

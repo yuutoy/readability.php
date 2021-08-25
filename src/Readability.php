@@ -456,19 +456,15 @@ class Readability
             /* @var DOMNode $meta */
             $elementName = $meta->getAttribute('name');
             $elementProperty = $meta->getAttribute('property');
-            $content = $meta->getAttribute('content');
+            $content = $meta->getAttribute('content'); 
             $matches = null;
             $name = null;
 
             if ($elementProperty) {
                 if (preg_match($propertyPattern, $elementProperty, $matches)) {
-                    for ($i = count($matches) - 1; $i >= 0; $i--) {
-                        // Convert to lowercase, and remove any whitespace
-                        // so we can match below.
-                        $name = preg_replace('/\s/', '', mb_strtolower($matches[$i]));
-                        // multiple authors
-                        $values[$name] = trim($content);
-                    }
+                    $name = preg_replace('/\s/', '', mb_strtolower($matches[0]));
+                    // multiple authors
+                    $values[$name] = trim($content);
                 }
             }
 
