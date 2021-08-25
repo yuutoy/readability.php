@@ -888,6 +888,7 @@ class Readability
                     preg_match(NodeUtility::$regexps['unlikelyCandidates'], $matchString) &&
                     !preg_match(NodeUtility::$regexps['okMaybeItsACandidate'], $matchString) &&
                     !$node->hasAncestorTag( 'table') &&
+                    !$node->hasAncestorTag( 'code') &&
                     $node->nodeName !== 'body' &&
                     $node->nodeName !== 'a'
                 ) {
@@ -1922,6 +1923,10 @@ class Readability
             if ($node->hasAncestorTag('table', -1, function ($node) {
                 return $node->isReadabilityDataTable();
             })) {
+                continue;
+            }
+
+            if ($node->hasAncestorTag('code')) {
                 continue;
             }
 
