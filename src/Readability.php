@@ -970,6 +970,30 @@ class Readability
     }
 
     /**
+     * compares second text to first one
+     * 1 = same text, 0 = completely different text
+     * works the way that it splits both texts into words and then finds words that are unique in second text
+     * the result is given by the lower length of unique parts
+     *
+     * @param string $textA
+     * @param string $textB
+     *
+     * @return int 1 = same text, 0 = completely different text
+     */
+    private function textSimilarity(string $textA, string $textB) {
+        $tokensA = array_filter(preg_split(NodeUtility::$regexps['tokenize'], mb_strtolower($textA)));
+        $tokensB = array_filter(preg_split(NodeUtility::$regexps['tokenize'], mb_strtolower($textB)));
+        if (!count($tokensA) || !count($tokensB)) {
+            return 0;
+        }
+        $uniqTokensB = array_filter($tokensB, function ($token) use (&$tokensA) {
+            return !in_array($token, $tokensA);
+        });
+        $distanceB = mb_strlen(implode($uniqTokensB, ' ')) / mb_strlen(implode($tokensB, ' '));
+        return 1 - $distanceB;
+    }
+
+    /**
      * Checks if the node is a byline.
      *
      * @param DOMNode $node
@@ -1571,7 +1595,6 @@ class Readability
         $this->_cleanConditionally($article, 'fieldset');
         $this->_clean($article, 'object');
         $this->_clean($article, 'embed');
-        $this->_clean($article, 'h1');
         $this->_clean($article, 'footer');
         $this->_clean($article, 'link');
         $this->_clean($article, 'aside');
@@ -1592,6 +1615,7 @@ class Readability
          * they are probably using it as a header and not a subheader,
          * so remove it since we already extract the title separately.
          */
+        /*
         $h2 = $article->getElementsByTagName('h2');
         if ($h2->length === 1) {
             $lengthSimilarRate = (mb_strlen($h2->item(0)->textContent) - mb_strlen($this->getTitle())) / max(mb_strlen($this->getTitle()), 1);
@@ -1608,6 +1632,7 @@ class Readability
                 }
             }
         }
+        */
 
         $this->_clean($article, 'iframe');
         $this->_clean($article, 'input');
@@ -1621,6 +1646,11 @@ class Readability
         $this->_cleanConditionally($article, 'table');
         $this->_cleanConditionally($article, 'ul');
         $this->_cleanConditionally($article, 'div');
+
+        // replace H1 with H2 as H1 should be only title that is displayed separately
+        foreach (iterator_to_array($article->getElementsByTagName('h1')) as $h1) {
+            NodeUtility::setNodeTag($h1, 'h2');
+        }
 
         $this->_cleanExtraParagraphs($article);
 
@@ -1871,6 +1901,19 @@ class Readability
         }
     }
 
+    private function getTextDensity($e, array $tags) {
+        $textLength = mb_strlen($e->getTextContent(true));
+        if ($textLength === 0) {
+          return 0;
+        }
+        $childrenLength = 0;
+        $children = $this->_getAllNodesWithTag($e, $tags);
+        foreach ($children as $child) {
+            $childrenLength += mb_strlen($child->getTextContent(true));
+        }
+        return $childrenLength / $textLength;
+      }
+
     /**
      * @param DOMDocument $article
      * @param string $tag Tag to clean conditionally
@@ -1953,6 +1996,7 @@ class Readability
                 $img = $node->getElementsByTagName('img')->length;
                 $li = $node->getElementsByTagName('li')->length - 100;
                 $input = $node->getElementsByTagName('input')->length;
+                $headingDensity = $this->getTextDensity($node, ['h1', 'h2', 'h3', 'h4', 'h5', 'h6']);
 
                 $embedCount = 0;
                 $embeds = $this->_getAllNodesWithTag($node, ['object', 'embed', 'iframe']);
@@ -1979,7 +2023,7 @@ class Readability
                     ($img > 1 && $p / $img < 0.5 && !$node->hasAncestorTag('figure')) ||
                     (!$isList && $li > $p) ||
                     ($input > floor($p / 3)) ||
-                    (!$isList && $contentLength < 25 && ($img === 0 || $img > 2) && !$node->hasAncestorTag('figure')) ||
+                    (!$isList && $headingDensity < 0.9 && $contentLength < 25 && ($img === 0 || $img > 2) && !$node->hasAncestorTag('figure')) ||
                     (!$isList && $weight < 25 && $linkDensity > 0.2) ||
                     ($weight >= 25 && $linkDensity > 0.5) ||
                     (($embedCount === 1 && $contentLength < 75) || $embedCount > 1);
@@ -2047,7 +2091,7 @@ class Readability
     }
 
     /**
-     * Clean out spurious headers from an Element. Checks things like classnames and link density.
+     * Clean out spurious headers from an Element.
      *
      * @param DOMDocument $article
      *
@@ -2055,15 +2099,16 @@ class Readability
      **/
     public function _cleanHeaders(DOMDocument $article)
     {
-        $headers = $this->_getAllNodesWithTag($article, ['h1', 'h2']);
+        $headingNodes = $this->_getAllNodesWithTag($article, ['h1', 'h2']);
         /** @var $header DOMElement */
-        foreach ($headers as $header) {
+        foreach ($headingNodes as $header) {
             $weight = 0;
             if ($this->configuration->getWeightClasses()) {
                 $weight = $header->getClassWeight();
             }
+            $heading = $header->getTextContent(false);
 
-            if ($weight < 0) {
+            if (($this->textSimilarity($this->title, $heading) > 0.75) || $weight < 0) {
                 $this->logger->debug(sprintf('[PrepArticle] Removing H node with 0 or less weight. Content was: \'%s\'', substr($header->nodeValue, 0, 128)));
 
                 NodeUtility::removeNode($header);

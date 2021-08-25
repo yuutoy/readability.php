@@ -28,6 +28,7 @@ class NodeUtility
         'shareElements' => '/(\b|_)(share|sharedaddy)(\b|_)/i',
         'nextLink' => '/(next|weiter|continue|>([^\|]|$)|»([^\|]|$))/i',
         'prevLink' => '/(prev|earl|old|new|<|«)/i',
+        'tokenize' => '/\W+/',
         'whitespace' => '/^\s*$/',
         'hasContent' => '/\S$/',
         'positive' => '/article|body|content|entry|hentry|h-entry|main|page|pagination|post|text|blog|story/i',
