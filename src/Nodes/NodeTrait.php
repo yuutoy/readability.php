@@ -400,7 +400,7 @@ trait NodeTrait
                 return false;
             }
 
-            if ($node->parentNode->tagName === $tagName && (!$filterFn || $filterFn($node->parentNode))) {
+            if ($node->parentNode->nodeName === $tagName && (!$filterFn || $filterFn($node->parentNode))) {
                 return true;
             }
 
