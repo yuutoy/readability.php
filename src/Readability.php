@@ -127,6 +127,11 @@ class Readability
     /**
      * @var array
      */
+    private $unlikelyRoles = ['menu', 'menubar', 'complementary', 'navigation', 'alert', 'alertdialog', 'dialog'];
+
+    /**
+     * @var array
+     */
     private $alterToDIVExceptions = [
         'div',
         'article',
@@ -896,8 +901,8 @@ class Readability
                 }
             }
 
-            if ($node->getAttribute('role') === 'complementary') {
-                $this->logger->debug(sprintf('Removing complementary content - %s', $matchString));
+            if (in_array($node->getAttribute('role'), $this->unlikelyRoles)) {
+                $this->logger->debug(sprintf('Removing content with role %s - %s', $node->getAttribute('role'), $matchString));
                 $node = NodeUtility::removeAndGetNext($node);
                 continue;
               }
