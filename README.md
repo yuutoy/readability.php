@@ -197,7 +197,7 @@ reader mode uses both of these techniques itself. Sanitizing unsafe content out 
 
 Version 2.1.0 - Up to date with Readability.js up to [19 Nov 2018](https://github.com/mozilla/readability/commit/876c81f710711ba2afb36dd83889d4c5b4fc2743).
 
-Master branch - Up to [13 Apr 2020](https://github.com/mozilla/readability/commit/52ab9b5c8916c306a47b2119270dcdabebf9d203).
+Master branch - Up to [10 Nov 2020](https://github.com/mozilla/readability/commit/e7d5bfce8e67cebed8ce5deef9b02223b77dd8f6).
 
 ## Testing
 
