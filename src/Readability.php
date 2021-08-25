@@ -989,7 +989,7 @@ class Readability
         $uniqTokensB = array_filter($tokensB, function ($token) use (&$tokensA) {
             return !in_array($token, $tokensA);
         });
-        $distanceB = mb_strlen(implode($uniqTokensB, ' ')) / mb_strlen(implode($tokensB, ' '));
+        $distanceB = mb_strlen(implode(' ', $uniqTokensB)) / mb_strlen(implode(' ', $tokensB));
         return 1 - $distanceB;
     }
 
