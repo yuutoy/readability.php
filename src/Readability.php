@@ -9,6 +9,8 @@ use fivefilters\Readability\Nodes\DOM\DOMText;
 use fivefilters\Readability\Nodes\NodeUtility;
 use Psr\Log\LoggerInterface;
 use \Masterminds\HTML5;
+use League\Uri\Http;
+use League\Uri\UriResolver;
 
 /**
  * Class Readability.
@@ -626,6 +628,37 @@ class Readability
     }
 
     /**
+     * Remove unnecessary nested elements
+     *
+     * @param DOMDocument $article
+     *
+     * @return void
+     */
+    private function simplifyNestedElements(DOMDocument $article)
+    {
+        $node = $article;
+    
+        while ($node) {
+            if ($node->parentNode && in_array($node->tagName, ['div', 'section']) && !($node->hasAttribute('id') && strpos($node->getAttribute('id'), 'readability') === 0)) {
+                if ($node->isElementWithoutContent()) {
+                    $node = NodeUtility::removeAndGetNext($node);
+                    continue;
+                } elseif ($node->hasSingleTagInsideElement('div') || $node->hasSingleTagInsideElement('section')) {
+                    $child = $node->children()->item(0);
+                    for ($i = 0; $i < $node->attributes->length; $i++) {
+                        $child->setAttribute($node->attributes->item($i)->name, $node->attributes->item($i)->value);
+                    }
+                    $node->parentNode->replaceChild($child, $node);
+                    $node = $child;
+                    continue;
+                }
+            }
+        
+            $node = NodeUtility::getNextNode($node);
+        }
+    }
+
+    /**
      * Returns the title of the html. Prioritizes the title from the metadata against the title tag.
      *
      * @return string|null
@@ -740,6 +773,8 @@ class Readability
     {
         list($pathBase, $scheme, $prePath) = $this->getPathInfo($this->configuration->getOriginalURL());
 
+        $uri = trim($uri);
+
         // If this is already an absolute URI, return it.
         if (preg_match('/^[a-zA-Z][a-zA-Z0-9\+\-\.]*:/', $uri)) {
             return $uri;
@@ -755,18 +790,23 @@ class Readability
             return $prePath . $uri;
         }
 
-        // Dotslash relative URI.
-        if (strpos($uri, './') === 0) {
-            return $pathBase . substr($uri, 2);
-        }
         // Ignore hash URIs:
         if (substr($uri, 0, 1) === '#') {
             return $uri;
         }
 
+        // Dotslash relative URI.
+        //if (strpos($uri, './') === 0) {
+        //    return $pathBase . substr($uri, 2);
+        //}
+
+        $baseUri = Http::createFromString($pathBase);
+        $relativeUri = Http::createFromString($uri);
+        return (string)UriResolver::resolve($relativeUri, $baseUri);
+
         // Standard relative URI; add entire path. pathBase already includes a
         // trailing "/".
-        return $pathBase . $uri;
+        //return $pathBase . $uri;
     }
 
     /**
@@ -951,9 +991,9 @@ class Readability
         $rel = $node->getAttribute('rel');
         $itemprop = $node->getAttribute("itemprop");
 
-        if ($rel === 'author' || ($itemprop && strpos($itemprop, 'author') !== false) || preg_match(NodeUtility::$regexps['byline'], $matchString) && $this->isValidByline($node->getTextContent())) {
-            $this->logger->info(sprintf('[Metadata] Found article author: \'%s\'', $node->getTextContent()));
-            $this->setAuthor(trim($node->getTextContent()));
+        if ($rel === 'author' || ($itemprop && strpos($itemprop, 'author') !== false) || preg_match(NodeUtility::$regexps['byline'], $matchString) && $this->isValidByline($node->getTextContent(false))) {
+            $this->logger->info(sprintf('[Metadata] Found article author: \'%s\'', $node->getTextContent(false)));
+            $this->setAuthor(trim($node->getTextContent(false)));
 
             return true;
         }
@@ -1232,7 +1272,7 @@ class Readability
                 continue;
             }
 
-            $ancestors = $node->getNodeAncestors();
+            $ancestors = $node->getNodeAncestors(5);
 
             // Exclude nodes with no ancestor
             if (count($ancestors) === 0) {
@@ -1879,7 +1919,7 @@ class Readability
                 continue;
             }
 
-            if (substr_count($node->getTextContent(), ',') < 10) {
+            if (substr_count($node->getTextContent(false), ',') < 10) {
                 /*
                  * If there are not very many commas, and the number of
                  * non-paragraph elements is more than paragraphs or other
@@ -2102,6 +2142,8 @@ class Readability
                 }
             });
         }
+
+        $this->simplifyNestedElements($article);
 
         if (!$this->configuration->getKeepClasses()) {
             $this->_cleanClasses($article);
