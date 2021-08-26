@@ -116,7 +116,7 @@ Then you pass this Configuration object to Readability. The following options ar
 
 Logging is optional and you will have to inject your own logger to save all the debugging messages. To do so, use a logger that implements the [PSR-3 logging interface](https://github.com/php-fig/log) and pass it to the configuration object. For example:
 
-```
+```php
 // Using monolog
 
 $log = new Logger('Readability');
@@ -197,7 +197,7 @@ reader mode uses both of these techniques itself. Sanitizing unsafe content out 
 
 Version 2.1.0 - Up to date with Readability.js up to [19 Nov 2018](https://github.com/mozilla/readability/commit/876c81f710711ba2afb36dd83889d4c5b4fc2743).
 
-Master branch - Up to [10 Nov 2020](https://github.com/mozilla/readability/commit/e7d5bfce8e67cebed8ce5deef9b02223b77dd8f6).
+Master branch - Up to date on 26 August 2021, with the exception of a [piece of code](https://github.com/fivefilters/readability.php/commit/1c662465bded2ab3acf3b975a1315c8c45f0bf73#diff-b9b31807b1a39caec18ddc293e9c52931ba8b55191c61e6b77a623d699a599ffR1899) which doesn't produce the same results for us.
 
 ## Testing
 
