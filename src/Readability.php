@@ -357,7 +357,7 @@ class Readability
     {
         $scripts = $this->_getAllNodesWithTag($dom, ['script']);
 
-        $jsonLdElement = $this->findNode($scripts, function($el) {
+        $jsonLdElement = $this->findNode($scripts, function ($el) {
             return $el->getAttribute('type') === 'application/ld+json';
         });
 
@@ -407,10 +407,10 @@ class Readability
                         isset($parsed['author'][0]['name']) && 
                         is_string($parsed['author'][0]['name'])
                     ) {
-                        $metadata['byline'] = array_filter($parsed['author'], function($author) {
+                        $metadata['byline'] = array_filter($parsed['author'], function ($author) {
                             return is_array($author) && isset($author['name']) && is_string($author['name']);
                         });
-                        $metadata['byline'] = array_map(function($author) {
+                        $metadata['byline'] = array_map(function ($author) {
                             return trim($author['name']);
                         }, $metadata['byline']);
                         $metadata['byline'] = implode(', ', $metadata['byline']);
@@ -432,7 +432,7 @@ class Readability
                 // The try-catch blocks are from the JS version. Not sure if there's anything
                 // here in the PHP version that would trigger an error or exception, so perhaps we can 
                 // remove the try-catch blocks here (or at least translate errors to exceptions for this bit)
-                $this->logger->debug('[JSON-LD] Error parsing: '.$err->getMessage());
+                $this->logger->debug('[JSON-LD] Error parsing: ' . $err->getMessage());
             }
         }
         return [];
@@ -694,7 +694,7 @@ class Readability
          * I can assure you it works properly if you let the code run.
          */
         if (preg_match('/ [\|\-\\\\\/>»] /i', $curTitle)) {
-            $titleHadHierarchicalSeparators = (bool)preg_match('/ [\\\\\/>»] /', $curTitle);
+            $titleHadHierarchicalSeparators = (bool) preg_match('/ [\\\\\/>»] /', $curTitle);
             $curTitle = preg_replace('/(.*)[\|\-\\\\\/>»] .*/i', '$1', $originalTitle);
 
             $this->logger->info(sprintf('[Metadata] Found hierarchical separators in title, new title is: \'%s\'', $curTitle));
@@ -827,7 +827,7 @@ class Readability
                 $pathBase = parse_url($url, PHP_URL_SCHEME) . '://' . parse_url($url, PHP_URL_HOST) . $this->baseURI;
             } else {
                 // Otherwise just prepend the base to the actual path
-                $pathBase = parse_url($url, PHP_URL_SCHEME) . '://' . parse_url($url, PHP_URL_HOST) . dirname(parse_url($url, PHP_URL_PATH)) . '/' . rtrim($this->baseURI, '/') . '/';
+                $pathBase = parse_url($url, PHP_URL_SCHEME) . '://' . parse_url($url, PHP_URL_HOST) . dirname(parse_url($url, PHP_URL_PATH)) . '/'.rtrim($this->baseURI, '/') . '/';
             }
         } else {
             $pathBase = parse_url($url, PHP_URL_SCHEME) . '://' . parse_url($url, PHP_URL_HOST) . dirname(parse_url($url, PHP_URL_PATH)) . '/';
@@ -890,7 +890,7 @@ class Readability
                 $shouldRemoveTitleHeader = false;
                 $node = NodeUtility::removeAndGetNext($node);
                 continue;
-              }
+            }
 
             // Remove unlikely candidates
             if ($stripUnlikelyCandidates) {
@@ -912,7 +912,7 @@ class Readability
                 $this->logger->debug(sprintf('Removing content with role %s - %s', $node->getAttribute('role'), $matchString));
                 $node = NodeUtility::removeAndGetNext($node);
                 continue;
-              }
+            }
 
             // Remove DIV, SECTION, and HEADER nodes without any content(e.g. text, image, video, or iframe).
             if (($node->nodeName === 'div' || $node->nodeName === 'section' || $node->nodeName === 'header' ||
@@ -1067,10 +1067,10 @@ class Readability
         }
 
         $htmlEscapeMap = $this->htmlEscapeMap;
-        $str = preg_replace_callback('/&(quot|amp|apos|lt|gt);/', function($tag) use($htmlEscapeMap) {
+        $str = preg_replace_callback('/&(quot|amp|apos|lt|gt);/', function ($tag) use ($htmlEscapeMap) {
             return $htmlEscapeMap[$tag[1]];
         }, $str);
-        $str = preg_replace_callback('/&#(?:x([0-9a-z]{1,4})|([0-9]{1,4}));/i', function($matches) {
+        $str = preg_replace_callback('/&#(?:x([0-9a-z]{1,4})|([0-9]{1,4}));/i', function ($matches) {
             $hex = $matches[1];
             $numStr = $matches[2];
             if ($hex !== '') {
@@ -1101,19 +1101,19 @@ class Readability
         return $this->isSingleImage($node->children()->item(0));
     }
 
-   /**
-    * Find all <noscript> that are located after <img> nodes, and which contain only one
-    * <img> element. Replace the first image with the image from inside the <noscript> tag,
-    * and remove the <noscript> tag. This improves the quality of the images we use on
-    * some sites (e.g. Medium).
-    *
-    * @param DOMDocument $dom
-    */
+    /**
+     * Find all <noscript> that are located after <img> nodes, and which contain only one
+     * <img> element. Replace the first image with the image from inside the <noscript> tag,
+     * and remove the <noscript> tag. This improves the quality of the images we use on
+     * some sites (e.g. Medium).
+     *
+     * @param DOMDocument $dom
+     */
     private function unwrapNoscriptImages(DOMDocument $dom) {
         // Find img without source or attributes that might contains image, and remove it.
         // This is done to prevent a placeholder img is replaced by img from noscript in next step.
         $imgs = iterator_to_array($dom->getElementsByTagName('img'));
-        array_walk($imgs, function($img) {
+        array_walk($imgs, function ($img) {
             for ($i = 0; $i < $img->attributes->length; $i++) {
                 $attr = $img->attributes->item($i);
                 switch ($attr->name) {
@@ -1134,7 +1134,7 @@ class Readability
 
         // Next find noscript and try to extract its image
         $noscripts = iterator_to_array($dom->getElementsByTagName('noscript'));
-        array_walk($noscripts, function($noscript) use($dom) {
+        array_walk($noscripts, function ($noscript) use($dom) {
             // Parse content of noscript and make sure it only contains image
             // [PHP port] Could copy innerHTML support over for the commented lines below, but is it needed?
             // var tmp = doc.createElement("div");
@@ -1914,7 +1914,7 @@ class Readability
     private function getTextDensity($e, array $tags) {
         $textLength = mb_strlen($e->getTextContent(true));
         if ($textLength === 0) {
-          return 0;
+            return 0;
         }
         $childrenLength = 0;
         $children = $this->_getAllNodesWithTag($e, $tags);
@@ -1922,7 +1922,7 @@ class Readability
             $childrenLength += mb_strlen($child->getTextContent(true));
         }
         return $childrenLength / $textLength;
-      }
+    }
 
     /**
      * @param DOMDocument $article
@@ -1955,7 +1955,7 @@ class Readability
             if (!$isList) {
                 $listLength = 0;
                 $listNodes = $this->_getAllNodesWithTag($node, ['ul', 'ol']);
-                array_walk($listNodes, function($list) use(&$listLength) {
+                array_walk($listNodes, function ($list) use(&$listLength) {
                     $listLength += mb_strlen($list->getTextContent());
                 });
                 $nodeTextLength = mb_strlen($node->getTextContent());
@@ -2208,7 +2208,7 @@ class Readability
                 'img', 'picture', 'figure', 'video', 'audio', 'source'
             ]);
         
-            array_walk($medias, function($media) {
+            array_walk($medias, function ($media) {
                 $src = $media->getAttribute('src');
                 $poster = $media->getAttribute('poster');
                 $srcset = $media->getAttribute('srcset');
@@ -2226,7 +2226,7 @@ class Readability
                 }
         
                 if ($srcset) {
-                    $newSrcset = preg_replace_callback(NodeUtility::$regexps['srcsetUrl'], function($matches) {
+                    $newSrcset = preg_replace_callback(NodeUtility::$regexps['srcsetUrl'], function ($matches) {
                         $this->logger->debug(sprintf('[PostProcess] Converting image URL to absolute URI: \'%s\'', substr($matches[1], 0, 128)));
 
                         return $this->toAbsoluteURI($matches[1]) . $matches[2] . $matches[3];
