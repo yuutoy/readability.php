@@ -22,6 +22,12 @@ The project aim is to be a 1 to 1 port of Mozilla's version and to follow closel
 
 **Developer/Maintainer**: FiveFilters.org
 
+## Code porting
+
+Master branch - Up to date on 26 August 2021, with the exception of a [piece of code](https://github.com/fivefilters/readability.php/commit/1c662465bded2ab3acf3b975a1315c8c45f0bf73#diff-b9b31807b1a39caec18ddc293e9c52931ba8b55191c61e6b77a623d699a599ffR1899) which doesn't produce the same results in PHP for us compard to the JS version. Perhaps there's an error, or some difference in the underlying code that affects this. If you know what's wrong, please feel free to drop us a note or submit a pull request. :)
+
+Version 2.1.0 - Up to date with Readability.js up to [19 Nov 2018](https://github.com/mozilla/readability/commit/876c81f710711ba2afb36dd83889d4c5b4fc2743).
+
 ## Requirements
 
 PHP 7.3+, ext-dom, ext-xml, and ext-mbstring. To install these dependencies (in the rare case your system does not have them already), you could try something like this in *nix like environments:
@@ -192,12 +198,6 @@ If you're going to use Readability with untrusted input (whether in HTML or DOM 
 the output of Readability. We would also recommend using [CSP](https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP) to add further defense-in-depth
 restrictions to what you allow the resulting content to do. The Firefox integration of
 reader mode uses both of these techniques itself. Sanitizing unsafe content out of the input is explicitly not something we aim to do as part of Readability itself - there are other good sanitizer libraries out there, use them!
-
-## Code porting
-
-Version 2.1.0 - Up to date with Readability.js up to [19 Nov 2018](https://github.com/mozilla/readability/commit/876c81f710711ba2afb36dd83889d4c5b4fc2743).
-
-Master branch - Up to date on 26 August 2021, with the exception of a [piece of code](https://github.com/fivefilters/readability.php/commit/1c662465bded2ab3acf3b975a1315c8c45f0bf73#diff-b9b31807b1a39caec18ddc293e9c52931ba8b55191c61e6b77a623d699a599ffR1899) which doesn't produce the same results for us.
 
 ## Testing
 
