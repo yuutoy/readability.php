@@ -250,6 +250,11 @@ class Readability
             }
         }
 
+        if (!$result) {
+            $this->logger->info('*** Parse failed :(');
+            return false;
+        }
+
         $result = $this->postProcessContent($result);
 
         // If we haven't found an excerpt in the article's metadata, use the article's
@@ -369,6 +374,7 @@ class Readability
                 $metadata = [];
                 if (
                     !isset($parsed['@context']) ||
+                    !is_string($parsed['@context']) ||
                     !preg_match('/^https?\:\/\/schema\.org$/', $parsed['@context'])
                 ) {
                     return $metadata;
@@ -2135,6 +2141,9 @@ class Readability
      */
     private function headerDuplicatesTitle($node) {
         if ($node->nodeName !== 'h1' && $node->nodeName !== 'h2') {
+            return false;
+        }
+        if (!isset($this->title)) {
             return false;
         }
         $heading = $node->getTextContent(false);
